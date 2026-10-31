@@ -66,9 +66,9 @@ See `docs/api-contract.md` for routes, payloads, errors, proof rules, idempotent
 ### Hosted Site acceptance and rollout (2026-10-31)
 
 The Site is [ReturnOps on Sites](https://returnops-nhan.loftycream129.chatgpt.site).
-The current verified release is version 4 (runtime revision 6, source SHA
-`e49c9e41e77071b91b7589abdde8ae8aae72a6ee`, deployment
-`appgdep_6ae5adfec4e08191b09041a462ecf72b`). The Sites audience is public/link
+The current verified release is version 5 (runtime revision 6, source SHA
+`9ebfe7ca3a59fc2dc6e87e37adc6c5df486d8896`, deployment
+`appgdep_6ae5b1986d1c81919ba9bfd051af49d9`). The Sites audience is public/link
 access, but ChatGPT sign-in remains required. `RETURNOPS_SIGNED_IN_DEMO=true`
 maps every verified signed-in user to the synthetic demo OWNER role; anonymous
 page/API access remains denied and all users share the synthetic D1 state.
@@ -79,9 +79,9 @@ sign-in (307); anonymous and spoofed API requests returned 401. The shared
 demo queue returned 200, a new C intake returned 201, and owner-only carrier
 review returned 200. The prepared C evaluation completed LIVE on
 `gpt-6.1-terra` as `NEEDS_OWNER_REVIEW` with three risk flags and no receipt,
-ready for judge review. Previous completed cases and the learned rule catalog
-persisted in that verification snapshot. A later manual refresh may intentionally
-return the shared database to five fresh cases. All effects remain `SIMULATED`.
+ready for judge review. The final manual refresh/reload returned the shared
+database to five fresh `NEW` cases with no evaluations or receipts and catalog
+version 1. All effects remain `SIMULATED`.
 
 This is simulated demo acceptance evidence, not a production-readiness claim.
 Independent second-account, mobile/recovery, and full handoff QA remain open.

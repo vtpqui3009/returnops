@@ -35,7 +35,7 @@ async function signIn(page: Page, runtime: OwnerRuntime) {
   ]);
   await page.goto(runtime.owner.origin);
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
-    'Mỗi yêu cầu',
+    'A clear resolution',
   );
 }
 
@@ -62,13 +62,13 @@ async function addEvidence(
   tracking = detail.order.tracking,
 ) {
   await page
-    .getByLabel('Thông tin tham chiếu (bắt buộc)', { exact: true })
+    .getByLabel('Reference details (required)', { exact: true })
     .fill(reference);
   await page
-    .getByLabel('Mã vận đơn trên bằng chứng (bắt buộc)', { exact: true })
+    .getByLabel('Evidence tracking number (required)', { exact: true })
     .fill(tracking);
-  await page.getByRole('button', { name: 'Thêm bằng chứng', exact: true }).click();
-  await expect(page.getByText('Đã ghi nhận thao tác.', { exact: false })).toBeVisible({
+  await page.getByRole('button', { name: 'Add evidence', exact: true }).click();
+  await expect(page.getByText('Action recorded.', { exact: false })).toBeVisible({
     timeout: 10_000,
   });
 }
@@ -86,14 +86,14 @@ test('B-01/B-02: waiting B displays its missing proof and keeps submitted eviden
 
   await signIn(page, ownerRuntime);
   await openCase(page, detail, claim);
-  await expect(page.getByText('Chờ bằng chứng', { exact: true })).toBeVisible();
+  await expect(page.getByText('Awaiting evidence', { exact: true })).toBeVisible();
   await addEvidence(
     page,
     detail,
     'Synthetic current seller packing reference remains unverified',
   );
-  await expect(page.getByText('Chờ đối chiếu', { exact: true })).toBeVisible();
-  await expect(page.getByText('Biên nhận mô phỏng', { exact: true })).toBeHidden();
+  await expect(page.getByText('Awaiting verification', { exact: true })).toBeVisible();
+  await expect(page.getByText('Simulated receipt', { exact: true })).toBeHidden();
 
   const after = await ownerRuntime.owner.detail(detail.id);
   expect(after.status).toBe('WAITING_EVIDENCE');
@@ -112,8 +112,8 @@ test('B-N01/B-N03: wrong or stale proof cannot become a current verified proof',
   await signIn(page, ownerRuntime);
   await openCase(page, detail, claim);
   await addEvidence(page, detail, 'Synthetic wrong tracking reference', 'wrong-tracking');
-  await expect(page.getByRole('button', { name: 'Xác minh bằng chứng', exact: true })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Từ chối', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Verify evidence', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Reject', exact: true })).toBeDisabled();
 
   const beforeStale = await ownerRuntime.owner.detail(detail.id);
   const wrongProof = beforeStale.evidence.find(
@@ -174,7 +174,7 @@ test('B-N01/B-N03: wrong or stale proof cannot become a current verified proof',
   await page.reload();
   await openCase(page, afterStaleSubmission, claim);
   const verifyButtons = page.getByRole('button', {
-    name: 'Xác minh bằng chứng',
+    name: 'Verify evidence',
     exact: true,
   });
   await expect(verifyButtons).toHaveCount(2);
@@ -198,21 +198,21 @@ test('B-N04: rejected proof stays immutable and replacement is a separate submit
   await signIn(page, ownerRuntime);
   await openCase(page, detail, claim);
   await addEvidence(page, detail, rejectedReference);
-  await page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }).click();
+  await page.getByRole('button', { name: 'Owner review', exact: true }).click();
   await page
-    .getByLabel('Kết quả đối chiếu (bắt buộc)', { exact: true })
+    .getByLabel('Review findings (required)', { exact: true })
     .fill('Synthetic rejection: source record does not match.');
-  await page.getByRole('button', { name: 'Từ chối', exact: true }).click();
+  await page.getByRole('button', { name: 'Reject', exact: true }).click();
   await page
     .getByRole('dialog')
-    .getByRole('button', { name: 'Xác nhận', exact: true })
+    .getByRole('button', { name: 'Confirm', exact: true })
     .click();
-  await expect(page.getByText('Đã từ chối', { exact: true })).toBeVisible({
+  await expect(page.getByText('Rejected', { exact: true })).toBeVisible({
     timeout: 10_000,
   });
   await expect(page.getByText(rejectedReference, { exact: true })).toBeVisible();
   await page
-    .getByRole('button', { name: 'Thêm tham chiếu thay thế', exact: true })
+    .getByRole('button', { name: 'Add replacement reference', exact: true })
     .click();
   await addEvidence(page, detail, replacementReference);
 

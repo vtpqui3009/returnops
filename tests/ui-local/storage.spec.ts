@@ -23,7 +23,7 @@ async function openCase(page: Page, order: string) {
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(claim(order));
 }
 async function confirm(page: Page) {
-  await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 async function record(info: TestInfo, phase: string, c: CaseDetail, counts: Record<string, number>) {
@@ -97,17 +97,17 @@ test('R-N04: retry a committed browser decision after losing its response', {
       await route.abort('connectionreset');
     }
   });
-  await page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Hướng xử lý do bạn chọn' }).click();
-  await page.getByRole('option', { name: 'Nhận hàng trả rồi hoàn tiền', exact: true }).click();
-  await page.getByLabel('Lý do quyết định (bắt buộc)', { exact: true }).fill('Synthetic response-loss test');
-  await page.getByRole('button', { name: 'Duyệt xử lý đơn này', exact: true }).click();
+  await page.getByRole('button', { name: 'Owner review', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Your selected resolution' }).click();
+  await page.getByRole('option', { name: 'Return, then refund', exact: true }).click();
+  await page.getByLabel('Decision reason (required)', { exact: true }).fill('Synthetic response-loss test');
+  await page.getByRole('button', { name: 'Approve this resolution', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   localD1!.dropNextCommittedResponse();
   await confirm(page);
-  await expect(page.getByRole('alert')).toContainText('Chưa hoàn tất thao tác');
+  await expect(page.getByRole('alert')).toContainText('Action incomplete');
   expect(upstreamLost).toBe(true);
-  await expect(page.getByText('Biên nhận mô phỏng', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Simulated receipt', { exact: true })).toHaveCount(0);
   const committed = await member.detail(c.id);
   const once = await localD1!.inspect(c.id);
   expect(committed.status).toBe('COMPLETED');
@@ -115,9 +115,9 @@ test('R-N04: retry a committed browser decision after losing its response', {
   expect(once.receiptCount).toBe(1);
   await record(info, 'browser saw error after D1 committed', committed, { ...once });
 
-  await page.getByRole('button', { name: 'Thử lại thao tác đã xác nhận', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry confirmed action', exact: true }).click();
   await confirm(page);
-  await expect(page.getByText('Biên nhận mô phỏng', { exact: true })).toBeVisible();
+  await expect(page.getByText('Simulated receipt', { exact: true })).toBeVisible();
   expect(attempts).toHaveLength(2);
   expect(attempts[0].key).toBeTruthy();
   expect(attempts[0].body).toBeTruthy();

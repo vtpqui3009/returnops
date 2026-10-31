@@ -24,7 +24,9 @@ clears shared workflow history and learned rules, restores the canonical five
 synthetic A–E cases with catalog version 1, and returns
 `{"reset":true,"caseCount":5}`. Reset acknowledgements survive later resets,
 so an old retry cannot erase newer progress. The operation is global and
-irreversible; anonymous/default allowlist mode returns 404 for this route.
+irreversible. Anonymous callers are rejected by authentication with
+`401 UNAUTHENTICATED`; an authenticated caller with shared mode disabled gets
+`404 NOT_FOUND` for this route.
 
 Each mutation stores an immutable REQUEST acknowledgement scoped to shop, actor, method, action, resource, and idempotency key. Replaying the same validated payload returns the original status/body, even when its linked EVALUATION is running or failed. Reusing a key with another payload returns `409 IDEMPOTENCY_CONFLICT`. EVALUATION rows have independent `PENDING`, `RUNNING`, `COMPLETED`, or `FAILED` status.
 

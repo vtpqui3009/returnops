@@ -36,9 +36,9 @@ export async function resetSharedDemo(request: Request, db: D1Database, config: 
     ...demoStatements(db, false),
   ];
   for (const [suffix, claim] of [
-    ["a","A · Nhận sai kích cỡ"], ["b","B · Hàng hư hỏng, cần bằng chứng đóng gói"],
-    ["c","C · Tranh chấp giao hàng"], ["d","D · Không vừa, hàng chưa dùng còn tem"],
-    ["e","E · Thử quy tắc học từ D"],
+    ["a","A · Wrong size received"], ["b","B · Damaged item, packing evidence required"],
+    ["c","C · Delivery dispute"], ["d","D · Does not fit, unused with tags intact"],
+    ["e","E · Test the rule learned from D"],
   ]) {
     const caseId = crypto.randomUUID(), orderId = `demo-${suffix}`;
     statements.push(db.prepare("INSERT INTO cases(id,shop_id,order_id,claim,evidence_version,status,created_at,updated_at) VALUES(?,'demo-shop',?,?,(SELECT CASE WHEN count(*)>0 THEN 1 ELSE 0 END FROM demo_proofs WHERE order_id=?),'NEW',unixepoch(),unixepoch())").bind(caseId,orderId,claim,orderId));

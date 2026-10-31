@@ -22,9 +22,9 @@ publish the shared demo mode with public or spoofable identity headers.
 
 The Site URL is
 [returnops-nhan.loftycream129.chatgpt.site](https://returnops-nhan.loftycream129.chatgpt.site).
-The current verified release is version **4** (runtime revision **6**), built
-from source SHA `e49c9e41e77071b91b7589abdde8ae8aae72a6ee`, deployment
-`appgdep_6ae5adfec4e08191b09041a462ecf72b`. Sites audience is public/link
+The current verified release is version **5** (runtime revision **6**), built
+from source SHA `9ebfe7ca3a59fc2dc6e87e37adc6c5df486d8896`, deployment
+`appgdep_6ae5b1986d1c81919ba9bfd051af49d9`. Sites audience is public/link
 access, while ChatGPT sign-in remains required. Version 3 (runtime revision 5)
 was the prior owner-private release.
 
@@ -58,8 +58,10 @@ verification snapshot preserved the prior five completed cases, the shared
 release's additional prepared case, and the accepted rule catalog. The UI's **Làm mới dữ
 liệu demo** button is the only supported hosted refresh: it requires a verified
 signed-in shared-demo OWNER, confirms a global irreversible erase, and
-atomically restores five fresh synthetic A–E cases. Do not use a raw CLI,
-drop/reseed command, or the removed initializer against the hosted DB.
+atomically restores five fresh synthetic A–E cases. The final v5 reset left
+five `NEW` cases with fresh IDs, no evaluations, receipts, or suggestions,
+catalog version 1, and the two built-in rules. Do not use a raw CLI, drop/reseed
+command, or the removed initializer against the hosted DB.
 
 All hosted workflow receipts are `SIMULATED`; no refund, message, or external
 marketplace action is performed.
@@ -68,15 +70,15 @@ marketplace action is performed.
 
 The current genuine signed-in Chrome session, with no owner/member allowlists,
 loaded the public-link Site and used the shared demo OWNER role. Anonymous root
-access redirected to ChatGPT sign-in (307); anonymous and spoofed API requests
-returned 401. The owner queue returned 200, a new C intake returned 201, and
-owner-only carrier review returned 200. The prepared C evaluation completed
-LIVE on `gpt-6.1-terra` as `NEEDS_OWNER_REVIEW` with three risk flags and no
-receipt, ready for judge review. Prior completed cases and learned rule state
-persisted in that verification snapshot; the supported manual refresh may
-intentionally return the shared database to five fresh cases.
+access redirected to ChatGPT sign-in (307), anonymous reset POST returned 401,
+and spoofed API requests returned 401. The UI cancel path made no POST and
+preserved prior state. The confirmed reset returned five fresh `NEW` cases in
+811 ms; a subsequent A evaluation completed LIVE on `gpt-6.1-terra` with a
+simulated receipt, and the final UI reset/reload returned the shared state to
+five fresh cases. Concurrent reset protection and durable idempotency
+acknowledgements were verified. No real side effect occurred.
 
-Local validation also passed: 36 tests, TypeScript, and build. Lint exits 0
+Local validation also passed: 44 tests, TypeScript, and build. Lint exits 0
 with one pre-existing anonymous-default-export warning in a test adapter.
 
 ## Publish and rollback

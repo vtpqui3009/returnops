@@ -34,13 +34,13 @@ export function createHttpApi(fetcher: typeof fetch = fetch): ReturnOpsApi {
   async function read<T>(path: string, options: RequestInit, valid: (x: unknown) => boolean): Promise<T> {
     let response: Response;
     try { response = await fetcher(path, { ...options, credentials: "same-origin", cache: "no-store" }); }
-    catch (error) { if (error instanceof Error && error.name === "AbortError") throw error; throw new RequestFailure(0, "NETWORK", "Chưa kết nối được. Bạn thử lại nhé."); }
+    catch (error) { if (error instanceof Error && error.name === "AbortError") throw error; throw new RequestFailure(0, "NETWORK", "Unable to connect. Please try again."); }
     const json = await response.json().catch(() => null);
     if (!response.ok) {
       const failure = object(json) && object(json.error) ? json.error : {};
-      throw new RequestFailure(response.status, text(failure.code) ? String(failure.code) : "HTTP_ERROR", text(failure.message) ? String(failure.message) : "Chưa đọc được dữ liệu.", text(failure.requestId) ? String(failure.requestId) : undefined);
+      throw new RequestFailure(response.status, text(failure.code) ? String(failure.code) : "HTTP_ERROR", text(failure.message) ? String(failure.message) : "Unable to read the data.", text(failure.requestId) ? String(failure.requestId) : undefined);
     }
-    if (!valid(json)) throw new RequestFailure(502, "INVALID_RESPONSE", "Dữ liệu trả về chưa đúng định dạng. Chưa thể xác nhận thao tác thành công.");
+    if (!valid(json)) throw new RequestFailure(502, "INVALID_RESPONSE", "The response format is invalid. The action cannot be confirmed as successful.");
     return json as T;
   }
   const post = <T, R>(path: string, request: Intent<T>, valid: (x: unknown) => boolean) => read<R>(path, { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": request.key }, body: JSON.stringify(request.body) }, valid);
@@ -68,14 +68,14 @@ export function currentVerifiedProof(c: CaseDetail, source: "SELLER" | "CARRIER"
   return c.evidence.some(e => evidenceIsCurrent(c, e) && e.source === source && e.type === type && e.reviewStatus === "VERIFIED" && !!e.verifiedBy && e.verifiedAt !== null && e.verifiedAt > 0);
 }
 export function friendlyError(error: unknown) {
-  if (!(error instanceof RequestFailure)) return "Chưa hoàn tất thao tác. Dữ liệu bạn nhập vẫn được giữ; thử lại nhé.";
-  if (error.status === 401) return "Phiên đăng nhập chưa sẵn sàng. Đăng nhập lại rồi tải lại mục này nhé.";
-  if (error.status === 403) return "Thao tác này cần quyền chủ shop. Bạn nhờ chủ shop kiểm tra quyền nhé.";
-  if (error.code === "PROOF_CONTEXT_MISMATCH") return "Bằng chứng chưa khớp đơn hoặc vận đơn hiện hành. Tải lại yêu cầu và kiểm tra thông tin nhé.";
-  if (error.status === 409) return "Thông tin đã thay đổi. Tải bản mới và xem lại trước khi xác nhận nhé.";
-  if (error.status === 404) return "Chưa tìm thấy dữ liệu cho mục này. API có thể chưa sẵn sàng; chưa có thay đổi nào được lưu.";
-  if (error.code === "EVALUATION_FAILED") return "Đánh giá chưa hoàn tất. Chưa xử lý thành công yêu cầu này; bạn có thể chọn đánh giá lại bằng dữ liệu mới.";
-  if (error.status >= 500 && error.code !== "INVALID_RESPONSE") return "Chưa nhận được kết quả xác nhận. Dữ liệu bạn nhập vẫn được giữ; bạn có thể thử lại cùng thao tác nhé.";
+  if (!(error instanceof RequestFailure)) return "The action is incomplete. Your input has been preserved; please try again.";
+  if (error.status === 401) return "Your session is not ready. Sign in again, then reload this view.";
+  if (error.status === 403) return "This action requires owner access. Ask the shop owner to check your permissions.";
+  if (error.code === "PROOF_CONTEXT_MISMATCH") return "The evidence does not match the current order or tracking number. Reload the request and check the details.";
+  if (error.status === 409) return "The information has changed. Reload and review the latest version before confirming.";
+  if (error.status === 404) return "No data was found for this item. The API may not be ready; no changes have been saved.";
+  if (error.code === "EVALUATION_FAILED") return "Evaluation incomplete. This request has not been resolved; you can reevaluate it using fresh data.";
+  if (error.status >= 500 && error.code !== "INVALID_RESPONSE") return "No confirmation was received. Your input has been preserved; you can retry the same action.";
   return error.message;
 }
 
@@ -87,7 +87,7 @@ export async function pollEvaluation(api: ReturnOpsApi, id: string, operationId:
     signal.throwIfAborted();
     if (c.evaluation?.id === operationId) {
       onUpdate?.(c);
-      if (c.evaluation.status === "FAILED") throw new RequestFailure(502, "EVALUATION_FAILED", "Đánh giá chưa hoàn tất.");
+      if (c.evaluation.status === "FAILED") throw new RequestFailure(502, "EVALUATION_FAILED", "Evaluation incomplete.");
       if (c.evaluation.status === "COMPLETED") return c;
     }
     await new Promise<void>((resolve, reject) => {
@@ -97,7 +97,7 @@ export async function pollEvaluation(api: ReturnOpsApi, id: string, operationId:
       if (signal.aborted) onAbort();
     });
   }
-  throw new RequestFailure(408, "POLL_TIMEOUT", "Chưa có kết quả sau thời gian chờ. Bạn có thể thử lại thao tác đã xác nhận để tiếp tục theo dõi.");
+  throw new RequestFailure(408, "POLL_TIMEOUT", "Timed out waiting for results. Retry the confirmed action to continue checking its progress.");
 }
 
 interface PollOptions { interval?: number; timeout?: number }

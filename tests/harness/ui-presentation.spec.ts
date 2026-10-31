@@ -46,9 +46,9 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 640 
   test(`owner controls after scrolling at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await page.goto(origin);
-    await page.getByRole('button', { name: 'Áo chưa dùng, còn tem nhưng không vừa', exact: true }).click();
-    await page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }).click();
-    const select = page.getByRole('combobox', { name: 'Hướng xử lý do bạn chọn' });
+    await page.getByRole('button', { name: 'Shirt does not fit; unused with tags intact', exact: true }).click();
+    await page.getByRole('button', { name: 'Owner review', exact: true }).click();
+    const select = page.getByRole('combobox', { name: 'Your selected resolution' });
     await select.scrollIntoViewIfNeeded();
     await page.evaluate(() => window.scrollTo(0, Math.max(100, window.scrollY)));
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
@@ -59,10 +59,10 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 640 
     await page.keyboard.press('Escape');
     await expect(select).toBeFocused();
     await select.click();
-    await page.getByRole('option', { name: 'Nhận hàng trả rồi hoàn tiền', exact: true }).click();
-    await expect(select).toHaveText('Nhận hàng trả rồi hoàn tiền');
-    await page.getByLabel('Lý do quyết định (bắt buộc)', { exact: true }).fill('Presentation regression');
-    const opener = page.getByRole('button', { name: 'Duyệt xử lý đơn này', exact: true });
+    await page.getByRole('option', { name: 'Return, then refund', exact: true }).click();
+    await expect(select).toHaveText('Return, then refund');
+    await page.getByLabel('Decision reason (required)', { exact: true }).fill('Presentation regression');
+    const opener = page.getByRole('button', { name: 'Approve this resolution', exact: true });
     for (const closeWithEscape of [true, false]) {
       await opener.click();
       const dialog = page.getByRole('dialog');
@@ -72,13 +72,13 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 640 
       expect(Math.abs(box.y + box.height / 2 - viewport.height / 2)).toBeLessThan(2);
       expect(box.y).toBeGreaterThanOrEqual(15);
       expect(box.y + box.height).toBeLessThanOrEqual(viewport.height - 15);
-      await expect(dialog.getByRole('button', { name: 'Đóng xác nhận' })).toBeFocused();
+      await expect(dialog.getByRole('button', { name: 'Close confirmation' })).toBeFocused();
       await page.keyboard.press('Shift+Tab');
-      await expect(dialog.getByRole('button', { name: 'Xác nhận', exact: true })).toBeFocused();
+      await expect(dialog.getByRole('button', { name: 'Confirm', exact: true })).toBeFocused();
       await page.keyboard.press('Tab');
-      await expect(dialog.getByRole('button', { name: 'Đóng xác nhận' })).toBeFocused();
+      await expect(dialog.getByRole('button', { name: 'Close confirmation' })).toBeFocused();
       if (closeWithEscape) await page.keyboard.press('Escape');
-      else await dialog.getByRole('button', { name: 'Để sau' }).click();
+      else await dialog.getByRole('button', { name: 'Later' }).click();
       await expect(dialog).toHaveCount(0);
       await expect(opener).toBeFocused();
     }
