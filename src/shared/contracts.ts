@@ -39,7 +39,8 @@ export interface OrderSnapshot {
   id: string;
   orderVersion: number;
   amountVnd: number;
-  deliveredAt: number;
+  /** Null means delivery time is unknown and blocks monetary completion. */
+  deliveredAt: number | null;
   tracking: string;
   reasonGroup: string;
   itemCondition: string;
