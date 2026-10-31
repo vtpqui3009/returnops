@@ -22,9 +22,12 @@ publish the shared demo mode with public or spoofable identity headers.
 
 The Site URL is
 [returnops-nhan.loftycream129.chatgpt.site](https://returnops-nhan.loftycream129.chatgpt.site).
-The current verified release is version **5** (runtime revision **6**), built
-from source SHA `9ebfe7ca3a59fc2dc6e87e37adc6c5df486d8896`, deployment
-`appgdep_6ae5b1986d1c81919ba9bfd051af49d9`. Sites audience is public/link
+The current release is version **6** (runtime revision **6**), built
+from source SHA `b65112323f80280be30db49317977f57487872a7`, deployment
+`appgdep_6ae5b454d5248191b96f481d38247d15`. Native Sites publication
+succeeded on 2026-10-31. This release translates app-owned copy and new demo
+fixtures into English; persisted case content is unchanged. Version 5 is the
+previous compatible shared-demo release. Sites audience is public/link
 access, while ChatGPT sign-in remains required. Version 3 (runtime revision 5)
 was the prior owner-private release.
 
@@ -55,8 +58,7 @@ The hosted D1 schema was migrated and verified with the shared synthetic
 fixtures. The temporary operator initializer was used once during version 2
 provisioning, then its route and secret were removed before version 3. The v4
 verification snapshot preserved the prior five completed cases, the shared
-release's additional prepared case, and the accepted rule catalog. The UI's **Làm mới dữ
-liệu demo** button is the only supported hosted refresh: it requires a verified
+release's additional prepared case, and the accepted rule catalog. The UI's **Reset demo data** button is the only supported hosted refresh: it requires a verified
 signed-in shared-demo OWNER, confirms a global irreversible erase, and
 atomically restores five fresh synthetic A–E cases. The final v5 reset left
 five `NEW` cases with fresh IDs, no evaluations, receipts, or suggestions,
@@ -97,3 +99,12 @@ Independent second-account testing, mobile/recovery, and full handoff QA remain
 open. The old hosted MEMBER-403 criterion is not applicable in shared mode;
 restricted-role tests remain covered by the default flag-off behavior. This is
 acceptance evidence for a simulated demo, not a production-readiness claim.
+
+## English release validation
+
+Version 6: 44 root tests and 14 harness tests passed, including desktop/mobile
+owner controls. TypeScript, lint and build passed (existing lint and punycode
+warnings only). The Sites packaging build also passed and the production
+deployment returned `succeeded` at the existing URL. Hosted browser workflows
+were not rerun for this release. Existing stored Vietnamese demo content requires
+an intentional **Reset demo data** action; deployment did not erase shared data.
