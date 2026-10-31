@@ -472,9 +472,10 @@ export async function handleCases(
             item.id === eid ? reviewed : item,
           ),
         };
+        const diagnostics = policyFor(next);
         const resume =
           body.reviewStatus === "VERIFIED" &&
-          policyFor(next).status === "COMPLETED";
+          diagnostics.status === "COMPLETED";
         const evalId = resume ? crypto.randomUUID() : null,
           response = {
             evidenceId: eid,
@@ -498,8 +499,11 @@ export async function handleCases(
           ),
           stmt(
             db,
-            "UPDATE cases SET case_version=case_version+1,evidence_version=evidence_version+1,pending_evaluation_operation_id=?,updated_at=unixepoch() WHERE id=?",
+            "UPDATE cases SET case_version=case_version+1,evidence_version=evidence_version+1,pending_evaluation_operation_id=?,flags=?,reasons=?,missing_evidence=?,updated_at=unixepoch() WHERE id=?",
             evalId,
+            JSON.stringify(diagnostics.flags),
+            JSON.stringify(diagnostics.reasons),
+            JSON.stringify(diagnostics.missingEvidence),
             id,
           ),
           event(db, fresh, m.id, "evidence.reviewed", a.id, {

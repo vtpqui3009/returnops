@@ -307,3 +307,23 @@ test('case detail and learning queue keep one D1 snapshot when writes follow a r
   assert.equal(batches, 1);
   assert.equal(queue.activeRulesVersion, version?.active_rules_version);
 });
+
+test('C evidence review immediately refreshes diagnostics without evaluation or completion', async (t) => {
+  const { runtime, db } = await demo(); t.after(() => runtime.dispose());
+  const ack = await (await handleApi(request('/api/cases', { orderId: 'demo-c', claim: 'Denied receipt' }, 'c-diagnostics'), db, config, runner)).json() as { caseId: string };
+  type Detail = { status: string; caseVersion: number; missingEvidence: string[]; flags: string[]; receipt: unknown; evidence: { id: string; evidenceVersion: number; reviewStatus: string }[] };
+  const before = await (await handleApi(get(`/api/cases/${ack.caseId}`), db, config, runner)).json() as Detail;
+  assert.deepEqual(before.missingEvidence, ['CARRIER_DELIVERY_PROOF']);
+  const evidence = before.evidence[0];
+  const review = await handleApi(request(`/api/cases/${ack.caseId}/evidence/${evidence.id}/review`, { expectedCaseVersion: before.caseVersion, expectedEvidenceVersion: evidence.evidenceVersion, reviewStatus: 'VERIFIED', reason: 'Carrier proof checked' }, 'c-diagnostics-review', 'owner'), db, config, runner);
+  assert.equal(review.status, 200);
+  assert.equal((await review.json() as { evaluationOperationId: string | null }).evaluationOperationId, null);
+  const after = await (await handleApi(get(`/api/cases/${ack.caseId}`), db, config, runner)).json() as Detail;
+  assert.equal(after.evidence[0].reviewStatus, 'VERIFIED');
+  assert.deepEqual(after.missingEvidence, []);
+  assert.equal(after.status, 'NEEDS_OWNER_REVIEW');
+  assert.equal(after.receipt, null);
+  for (const flag of ['DELIVERY_CONFLICT', 'REPEATED_COMPLAINTS', 'OVER_HARD_CAP']) assert.ok(after.flags.includes(flag));
+  const suggestions = await db.prepare('SELECT count(*) AS count FROM rule_suggestions WHERE source_case_id=?').bind(ack.caseId).first<{ count: number }>();
+  assert.equal(suggestions?.count, 0);
+});
