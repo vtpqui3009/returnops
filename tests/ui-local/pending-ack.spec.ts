@@ -7,7 +7,7 @@ test.use({ scenario: 'B' });
 test.afterEach(async ({ page }) => { await page.close(); });
 
 test('UI-N01: a durable review acknowledgement stays in progress until evaluation completes', {
-  annotation: { type: 'matrix-id', description: 'UI-N01' }
+  annotation: [{ type: 'matrix-id', description: 'UI-N01' }, { type: 'matrix-variant', description: 'pending-ack' }]
 }, async ({ page, runtime }, info) => {
   const { member, owner, localD1 } = runtime;
   test.skip(!localD1, 'Requires the disposable D1 fixture and its agent gate.');

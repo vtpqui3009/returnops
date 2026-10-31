@@ -10,4 +10,10 @@ Read `runnerStatus` and `matrix[].layers` together. A setup blocker can make the
 
 `ui-local` is a separate layer for the real UI component in API mode, using synthetic local sessions, the backend dispatcher and Miniflare D1. Its metadata records `uiCommit`. It does not cover Vinext/Sites route wiring. `relatedMatrixIds` links a partial probe to its matrix requirement without granting that ID a full-layer PASS. Read those passing observations alongside the remaining hosted/UI requirements.
 
+A runtime observation requires a valid fixture record and a complete case outcome or an explicit screen-state observation. Missing or incomplete evidence records NOT RUN and makes the run fail. Matrix PASS additionally requires every registered `matrix-variant` in `support/catalog.ts`. Filtered runs retain their individual results, while `matrix[].coverage` records missing variants and the full requirement stays NOT RUN. Duplicate or unknown variant names cannot fill a missing variant.
+
+UI evidence includes the asserted decision, completion label and rule provenance text. Read-state variants record loading, the injected HTTP error and the successful recovery response. These fields are selected separately from provider reply content.
+
+DATA-N01 remains partial. Persistence and reset of the disposable fixture have local evidence. The application's reset CLI and preservation of records outside demo scope require a separate run with a protected sentinel. Fixture reset alone cannot grant DATA-N01 a full API or browser PASS.
+
 Successful local fixtures also attach bounded terminal snapshots for up to 50 cases from the final queue before disposing D1. The reporter selects only case/operation/version/receipt fields. Agent fault probes use the real validator with a synthetic provider transport, including when the backend records its default LIVE failure label.
