@@ -19,15 +19,15 @@ async function checkReadRecovery(page: Page, endpoint: string, navigation: Locat
     const request = page.waitForRequest(endpoint);
     await navigation.click();
     expect((await request).method()).toBe('GET');
-    await expect(page.getByRole('heading', { name: 'Đang lấy thông tin cho bạn…', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Loading your information…', exact: true })).toBeVisible();
   } finally { release(); }
 
   const alert = page.getByRole('alert');
-  await expect(alert).toContainText('Chưa hoàn tất thao tác');
+  await expect(alert).toContainText('Action incomplete');
   const errorStatus = (await failedRead).status();
   expect(errorStatus).toBe(503);
   const retry = page.waitForResponse(endpoint);
-  await alert.getByRole('button', { name: 'Tải lại thông tin', exact: true }).click();
+  await alert.getByRole('button', { name: 'Reload information', exact: true }).click();
   const recoveryStatus = (await retry).status();
   expect(recoveryStatus).toBe(200);
   await expect(recoveredContent).toBeVisible();
@@ -51,10 +51,10 @@ for (const screen of ['Learning', 'Case detail', 'Owner review'] as const) {
 
       await page.goto(origin);
       if (!detail) {
-        await expect(page.getByRole('heading', { name: 'Chưa có yêu cầu phù hợp' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'No matching requests' })).toBeVisible();
         await checkReadRecovery(page, `${origin}/api/rule-suggestions`,
-          page.getByRole('button', { name: 'Quy tắc của shop', exact: true }),
-          page.getByRole('heading', { name: 'Chưa có gợi ý quy tắc mới', exact: true }), info, 'learning');
+          page.getByRole('button', { name: 'Shop rules', exact: true }),
+          page.getByRole('heading', { name: 'No new rule suggestions', exact: true }), info, 'learning');
         return;
       }
 
@@ -66,8 +66,8 @@ for (const screen of ['Learning', 'Case detail', 'Owner review'] as const) {
       } else {
         await openCase.click();
         await expect(page.getByRole('heading', { name: claim, exact: true })).toBeVisible();
-        await checkReadRecovery(page, endpoint, page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }),
-          page.getByLabel('Hướng xử lý do bạn chọn', { exact: true }), info, 'owner-review');
+        await checkReadRecovery(page, endpoint, page.getByRole('button', { name: 'Owner review', exact: true }),
+          page.getByLabel('Your selected resolution', { exact: true }), info, 'owner-review');
       }
     });
 }

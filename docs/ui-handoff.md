@@ -22,7 +22,7 @@ Add the following line to the local ignored `.dev.vars` file, preserving any exi
 RETURNOPS_UI_MODE=api
 ```
 
-Vinext runs server pages in a Cloudflare Worker: mode is read from the Worker binding, not Node shell `process.env`. Remove only this setting and restart to return to the labelled TEST review walkthrough. Hosted binding configuration belongs to Nhân/dot and is not changed here. There is no visitor-accessible mode/state/reset selector. TEST uses isolated sessionStorage fixtures so refresh can be tested; this is not D1 persistence or a product database. Production API mode does not read this storage. No credentials, actor IDs or roles are sent from UI forms.
+Vinext runs server pages in a Cloudflare Worker: mode is read from the Worker binding, not Node shell `process.env`. Remove only this setting and restart to return to the labelled TEST review walkthrough. Hosted binding configuration belongs to Nhân for Issue #11 and is not changed here. There is no visitor-accessible mode/state/reset selector. TEST uses isolated sessionStorage fixtures so refresh can be tested; this is not D1 persistence or a product database. Production API mode does not read this storage. No credentials, actor IDs or roles are sent from UI forms.
 
 ## Architecture and integration
 
@@ -71,4 +71,4 @@ This is evidence of Codex assisting product development, separate from any agent
 
 ## Remaining cross-lane gates
 
-Backend PR #8 and QA PR #9 arrive from merged main `da9dc68`. Merging code is separate from real UI/API acceptance. Nhân owns real API routes, D1/migrations/seed and server authorization/idempotency/policy. Khoa owns full E2E/deployment/judge access and submission. Hosted role mapping, final demo policy, model/tool probe and LIVE run are not completed by this UI work. TEST success cannot establish any of these. Retest the UI against real endpoints before integrated acceptance/issue closure.
+Backend PR #8 and QA PR #9 arrive from merged main `da9dc68`. Merging code is separate from real UI/API acceptance. For Issue #11, Nhân owns real UI/API integration, backend/D1 coordination, server authorization/idempotency/policy and private handoff; Khoa owns #13 QA; Quí owns the original UI lane and receives approved #12 pitch/demo evidence only. Hosted role mapping, final demo policy, model/tool probe and LIVE run are not completed by this UI work. TEST success cannot establish any of these. Retest the UI against real endpoints before integrated acceptance/issue closure.

@@ -26,7 +26,7 @@ export const tools = toolNames.map((name) => ({
     check_policy: "Read deterministic policy outcome; never change it.",
     list_missing_evidence: "Read required current verified proof.",
     draft_reply: "Draft a short factual reply, always explicitly SIMULATED.",
-    escalate: "Request owner review; cannot authorize completion.",
+    escalate: "Request owner review for an additional concern not already represented by policy; cannot authorize completion.",
   }[name],
   parameters: {
     type: "object",
@@ -64,11 +64,15 @@ export function executeTool(
       return context.policy;
     case "list_missing_evidence":
       return context.policy.missingEvidence;
-    case "draft_reply":
+    case "draft_reply": {
+      const body = (input as { text: string }).text.trim().replace(/^(?:SIMULATED:\s*)+/i, "");
+      if (!body)
+        throw new ApiFault(503, "INVALID_TOOL_CALL", "Agent returned an empty draft");
       return {
         mode: "SIMULATED",
-        text: `SIMULATED: ${(input as { text: string }).text}`,
+        text: `SIMULATED: ${body}`,
       };
+    }
     case "escalate":
       return {
         needsOwnerReview: true,

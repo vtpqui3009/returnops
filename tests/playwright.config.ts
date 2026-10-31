@@ -19,6 +19,6 @@ export default defineConfig({
     { name: 'api', testMatch: 'api/**/*.spec.ts', timeout: 180_000 },
     { name: 'ui-local', testMatch: 'ui-local/**/*.spec.ts', timeout: 90_000, use: { browserName: 'chromium', launchOptions: { timeout: 30_000 } } },
     { name: 'inventory', testMatch: 'inventory/**/*.spec.ts' },
-    { name: 'e2e', testMatch: 'e2e/**/*.spec.ts', use: { browserName: 'chromium' } }
+    { name: 'e2e', testMatch: 'e2e/**/*.spec.ts', use: { browserName: 'chromium', channel: 'chrome' } }
   ]
 });

@@ -4,9 +4,29 @@ This contract is implemented by `src/server/api.ts` and the route adapters under
 
 ## Authentication and mutation rules
 
-Hosted requests are trusted only when the Sites ingress has been verified and `SITES_IDENTITY_VERIFIED=true` is set server-side. The server maps `oai-authenticated-user-id` to `OWNER_USER_IDS` or `MEMBER_USER_IDS`. Missing trust or identity returns `401 UNAUTHENTICATED`; an authenticated ID outside the allowlists returns `403 FORBIDDEN`. The default is fail-closed.
+Hosted requests are trusted only when the Sites ingress has been verified and
+`SITES_IDENTITY_VERIFIED=true` is set server-side. Every protected route
+requires both the Sites user ID and email headers. With
+`RETURNOPS_SIGNED_IN_DEMO=true`, any verified signed-in identity receives the
+synthetic demo `OWNER` role and uses the shared D1 fixtures; this does not grant
+access to real customer data. With the flag unset or `false`, the server maps
+the identity to `OWNER_USER_IDS` or `MEMBER_USER_IDS`. Missing trust or identity
+returns `401 UNAUTHENTICATED`; an authenticated ID outside the allowlists in
+default mode returns `403 FORBIDDEN`. Anonymous access is never enabled.
 
 Every mutation requires a same-origin `Origin` header, JSON content type, an `Idempotency-Key` with 1–128 printable characters, and only documented JSON fields. Unknown or malformed fields return `400`. Bodies are limited to 16 KiB. Money is positive integer VND and times are epoch seconds. Exact resource-version checks return `409 STALE_VERSION` when stale.
+
+`POST /api/demo/reset` is the one supported hosted data refresh. It is
+available only when `RETURNOPS_SIGNED_IN_DEMO=true` and the caller is a
+verified signed-in demo OWNER. It requires the same origin, JSON, an
+`Idempotency-Key`, and exactly `{"confirm":"reset-shared-demo"}`. It atomically
+clears shared workflow history and learned rules, restores the canonical five
+synthetic A–E cases with catalog version 1, and returns
+`{"reset":true,"caseCount":5}`. Reset acknowledgements survive later resets,
+so an old retry cannot erase newer progress. The operation is global and
+irreversible. Anonymous callers are rejected by authentication with
+`401 UNAUTHENTICATED`; an authenticated caller with shared mode disabled gets
+`404 NOT_FOUND` for this route.
 
 Each mutation stores an immutable REQUEST acknowledgement scoped to shop, actor, method, action, resource, and idempotency key. Replaying the same validated payload returns the original status/body, even when its linked EVALUATION is running or failed. Reusing a key with another payload returns `409 IDEMPOTENCY_CONFLICT`. EVALUATION rows have independent `PENDING`, `RUNNING`, `COMPLETED`, or `FAILED` status.
 
@@ -16,6 +36,8 @@ Errors use `{ "error": { "code": string, "message": string, "requestId": string 
 
 | Method | Route | Input / result | Permission |
 | --- | --- | --- | --- |
+| GET | `/api/identity` | Current Sites-scoped user ID only; no role or credentials | Any trusted signed-in Sites user |
+| POST | `/api/demo/reset` | `{confirm:"reset-shared-demo"}` → `{reset:true,caseCount:5}` | Shared demo OWNER only |
 | GET | `/api/cases?status=&cursor=&limit=` | Bounded queue, versions, flags, next cursor | Member/owner |
 | GET | `/api/cases/:id` | Case, current order snapshot, evidence, evaluation, timeline, receipt | Member/owner |
 | POST | `/api/cases` | `IntakeRequest` → `201 {caseId,evaluationOperationId}` | Member/owner |

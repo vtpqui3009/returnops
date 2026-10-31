@@ -10,7 +10,7 @@ export function validateOrigin(value: string, allowRemote = false): string {
 
 export class ApiClient {
   readonly origin: string;
-  constructor(baseURL: string, private readonly headers: Record<string, string>, allowRemote = false) {
+  constructor(baseURL: string, private readonly headers: Record<string, string>, allowRemote = false, private readonly timeoutMs = 10_000) {
     this.origin = validateOrigin(baseURL, allowRemote);
     for (const name of Object.keys(headers)) {
       if (['origin', 'host', 'content-type', 'idempotency-key'].includes(name.toLowerCase()) || name.toLowerCase().startsWith('oai-authenticated-user-')) throw new Error('Adapter must not override request contract or forge identity headers.');
@@ -27,7 +27,7 @@ export class ApiClient {
     let response: Response;
     try {
       response = await fetch(url, {
-        method, redirect: 'error', signal: AbortSignal.timeout(10_000),
+        method, redirect: 'error', signal: AbortSignal.timeout(this.timeoutMs),
         headers: { ...this.headers, ...(method === 'POST' ? { Origin: this.origin, 'Content-Type': 'application/json', 'Idempotency-Key': key ?? randomUUID() } : {}) },
         body: body === undefined ? undefined : JSON.stringify(body)
       });

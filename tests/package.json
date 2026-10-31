@@ -7,6 +7,7 @@
     "test": "playwright test --project=harness",
     "test:api": "node scripts/preflight.mjs api && playwright test --project=api",
     "test:e2e": "node scripts/preflight.mjs e2e && playwright test --project=e2e",
+    "test:e2e:local-live": "node scripts/run-full-route.mjs",
     "test:ui-local": "node scripts/preflight.mjs ui-local && node scripts/build-ui-probe.mjs && playwright test --project=ui-local",
     "test:all-local": "node scripts/preflight.mjs api && node scripts/build-ui-probe.mjs && playwright test",
     "test:list": "playwright test --list",

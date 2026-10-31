@@ -57,6 +57,24 @@ test('API denies anonymous and member owner actions before D1 mutation', async (
   assert.equal(unchanged.evidence[0].reviewStatus, 'SUBMITTED');
 });
 
+test('signed-in shared demo allows an unlisted judge to perform an owner action', async (t) => {
+  const { runtime, db } = await demo(); t.after(() => runtime.dispose());
+  const shared = { ...config, OWNER_USER_IDS: '', MEMBER_USER_IDS: '', RETURNOPS_SIGNED_IN_DEMO: 'true' };
+  assert.equal((await handleApi(new Request('https://returnops.local/api/cases'), db, shared, runner)).status, 401);
+  const intake = await handleApi(request('/api/cases', {orderId:'demo-c', claim:'Shared demo delivery dispute'}, 'judge-intake', 'new-judge'), db, shared, runner);
+  assert.equal(intake.status, 201);
+  const {caseId} = await intake.json() as {caseId:string};
+  const detail = await (await handleApi(get(`/api/cases/${caseId}`, 'new-judge'), db, shared, runner)).json() as {caseVersion:number;evidence:{id:string;evidenceVersion:number}[]};
+  const reviewed = await handleApi(request(`/api/cases/${caseId}/evidence/${detail.evidence[0].id}/review`, {
+    expectedCaseVersion:detail.caseVersion, expectedEvidenceVersion:detail.evidence[0].evidenceVersion,
+    reviewStatus:'VERIFIED', reason:'Signed-in judge checked synthetic metadata',
+  }, 'judge-review', 'new-judge'), db, shared, runner);
+  assert.equal(reviewed.status, 200);
+  const saved = await db.prepare('SELECT review_status,verified_by FROM evidence WHERE id=?').bind(detail.evidence[0].id).first<{review_status:string;verified_by:string}>();
+  assert.equal(saved?.review_status, 'VERIFIED');
+  assert.equal(saved?.verified_by, 'new-judge');
+});
+
 test('wrong proof context and over-cap owner completion leave state and receipts unchanged', async (t) => {
   const { runtime, db } = await demo(); t.after(() => runtime.dispose());
   const intake = await handleApi(request('/api/cases', { orderId: 'demo-c', claim: 'Conflict' }, 'guard-c'), db, config, runner);
@@ -138,6 +156,22 @@ test('D learning changes E only after explicit acceptance, while C dispute prese
   assert.equal(dispute.status, 200); assert.equal((await dispute.json() as { suggestionId: string | null }).suggestionId, null);
   const completedC = await (await handleApi(get(`/api/cases/${cId}`), db, config, runner)).json() as { status: string; flags: string[] };
   assert.equal(completedC.status, 'COMPLETED'); assert.deepEqual(new Set(completedC.flags), new Set(['DELIVERY_CONFLICT', 'REPEATED_COMPLAINTS', 'OVER_HARD_CAP']));
+});
+
+test('additional agent escalation still blocks learning from an otherwise eligible fit return', async (t) => {
+  const { runtime, db } = await demo(); t.after(() => runtime.dispose());
+  const escalated: AgentRunner = async (...args) => ({ ...await runner(...args), escalated: true, escalationReason: 'Additional concern outside deterministic policy' });
+  const intake = await handleApi(request('/api/cases', { orderId: 'demo-d', claim: 'Fit return' }, 'escalated-d'), db, config, escalated);
+  assert.equal(intake.status, 201);
+  const { caseId } = await intake.json() as { caseId: string };
+  const detail = await (await handleApi(get(`/api/cases/${caseId}`), db, config, escalated)).json() as { reasons: string[]; caseVersion: number; activeRulesVersion: number };
+  assert.ok(detail.reasons.includes('AGENT_ESCALATION'));
+  const decision = await handleApi(request(`/api/cases/${caseId}/owner-decision`, { expectedCaseVersion: detail.caseVersion, expectedActiveRulesVersion: detail.activeRulesVersion, decision: 'RETURN_THEN_REFUND', reason: 'Owner manually resolves additional concern' }, 'escalated-d-decision', 'owner'), db, config, escalated);
+  assert.equal(decision.status, 200);
+  const result = await decision.json() as { suggestionId: string | null; activeRulesVersion: number };
+  assert.equal(result.suggestionId, null);
+  assert.equal(result.activeRulesVersion, detail.activeRulesVersion);
+  assert.equal((await db.prepare('SELECT count(*) AS count FROM rule_suggestions').first<{ count: number }>())?.count, 0);
 });
 
 test('failed evaluation preserves acknowledgement and only guarded owner recovery can create a manual receipt', async (t) => {

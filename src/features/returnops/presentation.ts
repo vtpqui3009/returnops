@@ -12,13 +12,13 @@ export function evaluationHasFailed(c: CaseDetail) {
 }
 
 const labels: Record<string, string> = {
-  "case.intake": "Đã tiếp nhận yêu cầu",
-  "evidence.submitted": "Đã thêm tham chiếu bằng chứng",
-  "evidence.reviewed": "Chủ shop đã xem xét bằng chứng",
-  "owner.decision": "Đã lưu quyết định của chủ shop",
-  "evaluation.requested": "Đã yêu cầu đánh giá",
-  "evaluation.completed": "Đã hoàn tất đánh giá",
-  "evaluation.failed": "Đánh giá chưa hoàn tất",
+  "case.intake": "Request received",
+  "evidence.submitted": "Evidence reference added",
+  "evidence.reviewed": "Evidence reviewed by owner",
+  "owner.decision": "Owner decision saved",
+  "evaluation.requested": "Evaluation requested",
+  "evaluation.completed": "Evaluation completed",
+  "evaluation.failed": "Evaluation incomplete",
 };
 
 export function timelinePresentation(e: Pick<TimelineEvent, "type" | "evaluationStatus">) {
@@ -26,7 +26,7 @@ export function timelinePresentation(e: Pick<TimelineEvent, "type" | "evaluation
   const failed = e.type === "evaluation.failed" || evaluationEvent && e.evaluationStatus === "FAILED";
   const progress = e.type === "evaluation.requested" || evaluationEvent && (e.evaluationStatus === "PENDING" || e.evaluationStatus === "RUNNING");
   return {
-    label: failed ? "Đánh giá chưa hoàn tất" : labels[e.type] || "Cập nhật hồ sơ",
+    label: failed ? "Evaluation incomplete" : labels[e.type] || "Case updated",
     tone: failed ? "error" : progress ? "progress" : labels[e.type] ? "success" : "neutral",
   };
 }

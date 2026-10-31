@@ -8,13 +8,13 @@ const clock = () => Math.floor(Date.now() / 1000);
 const clone = <T>(x: T): T => structuredClone(x);
 const canonical = (x: unknown): string => x && typeof x === "object" ? Array.isArray(x) ? `[${x.map(canonical).join(",")}]` : `{${Object.keys(x).sort().map(k => `${JSON.stringify(k)}:${canonical((x as Record<string, unknown>)[k])}`).join(",")}}` : JSON.stringify(x) ?? "null";
 export function seedTestStore(): TestStore {
-  const claims = ["Shop giao nhầm kích cỡ áo", "Bình giữ nhiệt bị móp khi nhận", "Khách báo chưa nhận tai nghe", "Áo chưa dùng, còn tem nhưng không vừa", "Yêu cầu trả áo không vừa, đủ bằng chứng"];
+  const claims = ["Shop sent the wrong shirt size", "Insulated bottle arrived dented", "Customer reports headphones not received", "Shirt does not fit; unused with tags intact", "Return request for a shirt that does not fit, with complete evidence"];
   const amounts = [189000, 245000, 1250000, 199000, 279000];
   const cases: Record<string, CaseDetail> = {};
   for (const [i, letter] of ["a", "b", "c", "d", "e"].entries()) {
     const id = `demo-${letter}`;
     const c: CaseDetail = { id, order: { id, orderVersion: 1, amountVnd: amounts[i], deliveredAt: clock() - 86400, tracking: `trk-${letter}`, reasonGroup: i === 0 ? "SIZE_MISMATCH" : i === 1 ? "DAMAGE" : i === 2 ? "NOT_RECEIVED" : "FIT_ISSUE", itemCondition: i === 0 ? "WRONG_SIZE" : i === 1 ? "DAMAGED" : i === 2 ? "DELIVERY_CONFLICT" : "UNUSED_TAGS_INTACT" }, caseVersion: 1, evidenceVersion: 1, activeRulesVersion: 1, status: i === 0 ? "COMPLETED" : i === 1 ? "WAITING_EVIDENCE" : "NEEDS_OWNER_REVIEW", claim: claims[i], reasons: [], flags: i === 2 ? ["DELIVERY_CONFLICT", "REPEATED_COMPLAINTS", "OVER_HARD_CAP"] : [], missingEvidence: i === 1 ? ["SELLER_PACKING_PROOF"] : [], decision: null, appliedRuleId: null, appliedRuleVersion: null, sourceCaseId: null, pendingEvaluationOperationId: null, evaluation: null, evidence: [], timeline: [], receipt: null };
-    if (i !== 1) c.evidence.push({ id: `proof-${letter}`, caseId: id, orderId: id, orderVersion: 1, tracking: c.order.tracking, type: i < 2 ? "PACKING" : i === 2 ? "DELIVERY" : "ITEM_CONDITION", source: i < 2 ? "SELLER" : i === 2 ? "CARRIER" : "BUYER", reference: `demo-proof-${letter}`, observedAt: clock(), evidenceVersion: 1, reviewStatus: i === 2 ? "SUBMITTED" : "VERIFIED", verifiedBy: i === 2 ? null : "test-owner", verifiedAt: i === 2 ? null : clock(), reviewReason: i === 2 ? null : "Đã đối chiếu trong dữ liệu TEST" });
+    if (i !== 1) c.evidence.push({ id: `proof-${letter}`, caseId: id, orderId: id, orderVersion: 1, tracking: c.order.tracking, type: i < 2 ? "PACKING" : i === 2 ? "DELIVERY" : "ITEM_CONDITION", source: i < 2 ? "SELLER" : i === 2 ? "CARRIER" : "BUYER", reference: `demo-proof-${letter}`, observedAt: clock(), evidenceVersion: 1, reviewStatus: i === 2 ? "SUBMITTED" : "VERIFIED", verifiedBy: i === 2 ? null : "test-owner", verifiedAt: i === 2 ? null : clock(), reviewReason: i === 2 ? null : "Verified in TEST data" });
     cases[id] = c;
   }
   const store: TestStore = { cases, rules: { suggestions: [], activeRules: [], activeRulesVersion: 1 }, replay: {} };
@@ -23,11 +23,11 @@ export function seedTestStore(): TestStore {
 }
 function complete(c: CaseDetail, decision: SimulatedReceipt["decision"], completionMode: "AUTO" | "MANUAL") {
   c.status = "COMPLETED"; c.decision = decision;
-  c.receipt ??= { id: `receipt-${c.id}`, mode: "SIMULATED", completionMode, agentRunId: completionMode === "AUTO" ? `test-${c.id}` : null, decision, packet: `Hồ sơ mô phỏng cho ${c.id}. Không nộp sàn hay chuyển tiền.`, reply: "Shop đã ghi nhận yêu cầu và hướng xử lý. Đây là bản nháp, chưa gửi khách.", appliedRuleId: c.appliedRuleId, appliedRuleVersion: c.appliedRuleVersion, sourceCaseId: c.sourceCaseId };
+  c.receipt ??= { id: `receipt-${c.id}`, mode: "SIMULATED", completionMode, agentRunId: completionMode === "AUTO" ? `test-${c.id}` : null, decision, packet: `Simulated case record for ${c.id}. No marketplace submission or money transfer.`, reply: "The shop has recorded the request and resolution. This is a draft and has not been sent to the customer.", appliedRuleId: c.appliedRuleId, appliedRuleVersion: c.appliedRuleVersion, sourceCaseId: c.sourceCaseId };
 }
 export function createTestApi(store = seedTestStore(), save: (s: TestStore) => void = () => {}, delay = 200, role: "OWNER" | "MEMBER" = "OWNER"): ReturnOpsApi {
   const wait = async (signal?: AbortSignal) => { signal?.throwIfAborted(); await new Promise(r => setTimeout(r, delay)); signal?.throwIfAborted(); };
-  const fail = (status: number, code: string) => { throw new RequestFailure(status, code, "Chưa thể thực hiện thao tác. Kiểm tra dữ liệu và thử lại nhé."); };
+  const fail = (status: number, code: string) => { throw new RequestFailure(status, code, "Unable to perform this action. Check the data and try again."); };
   const get = (id: string) => store.cases[id] || fail(404, "NOT_FOUND");
   const version = (actual: number, expected: number) => { if (actual !== expected) fail(409, "STALE_VERSION"); };
   const proofContext = (c: CaseDetail, e: Pick<Evidence, "orderId" | "orderVersion" | "tracking">) => { if (e.orderId !== c.order.id || e.orderVersion !== c.order.orderVersion || e.tracking !== c.order.tracking) fail(409, "PROOF_CONTEXT_MISMATCH"); };
@@ -77,6 +77,6 @@ export function browserTestApi(): ReturnOpsApi {
   // Session-only TEST fixtures. Production API mode never reads browser storage.
   let store: TestStore;
   try { const saved = sessionStorage.getItem(key); store = saved ? JSON.parse(saved) : seedTestStore(); if (!store.cases || !store.rules || !store.replay) throw Error(); }
-  catch { throw new RequestFailure(0, "TEST_STORAGE", "Chưa đọc được dữ liệu TEST trong phiên này. Không có dữ liệu thật bị thay đổi."); }
+  catch { throw new RequestFailure(0, "TEST_STORAGE", "Unable to read TEST data in this session. No real data was changed."); }
   return createTestApi(store, s => { sessionStorage.setItem(key, JSON.stringify(s)); });
 }
