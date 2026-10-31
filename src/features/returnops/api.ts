@@ -16,6 +16,7 @@ export interface ReturnOpsApi {
   accept(id: string, request: Intent<AcceptSuggestionRequest>): Promise<AcceptSuggestionResponse>;
   reject(id: string, request: Intent<RejectSuggestionRequest>): Promise<RejectSuggestionResponse>;
   evaluate(id: string, request: Intent<EvaluateRequest>): Promise<EvaluateAcknowledgement>;
+  resetDemo?(request: Intent<{ confirm: "reset-shared-demo" }>): Promise<{ reset: true; caseCount: number }>;
 }
 
 export function createHttpApi(fetcher: typeof fetch = fetch): ReturnOpsApi {
@@ -55,6 +56,7 @@ export function createHttpApi(fetcher: typeof fetch = fetch): ReturnOpsApi {
     accept: (id, r) => post(`/api/rule-suggestions/${encodeURIComponent(id)}/accept`, r, ack(["suggestionId", "ruleId"], ["suggestionVersion", "activeRulesVersion"])),
     reject: (id, r) => post(`/api/rule-suggestions/${encodeURIComponent(id)}/reject`, r, x => object(x) && x.status === "REJECTED" && ack(["suggestionId"], ["suggestionVersion", "activeRulesVersion"])(x)),
     evaluate: (id, r) => post(`${path(id)}/evaluate`, r, ack(["caseId", "operationId"])),
+    resetDemo: r => post("/api/demo/reset", r, x => object(x) && x.reset === true && x.caseCount === 5),
   };
 }
 

@@ -72,8 +72,31 @@ mode the identity is used for audit/replay but does not need to appear in an
 allowlist; with the flag disabled, API access still requires the original
 allowlists and verified identity configuration.
 
+The current verified Site release is version 4/runtime revision 6 with public
+link audience and ChatGPT sign-in required. A genuine signed-in session with
+no configured allowlists reached the queue, created a new C intake, and
+completed owner-only carrier review. Anonymous root access redirected to
+sign-in and anonymous/spoofed API requests returned 401. The prepared C run
+completed LIVE with `gpt-6.1-terra` as `NEEDS_OWNER_REVIEW`, three risk flags,
+and no receipt. The five earlier completed cases and learned rule state were
+preserved.
+
+### Shared demo refresh
+
+When `RETURNOPS_SIGNED_IN_DEMO=true`, the UI's **Làm mới dữ liệu demo** action
+calls `POST /api/demo/reset`. It requires a verified signed-in demo OWNER,
+same-origin JSON, an idempotency key, and the exact confirmation body
+`{"confirm":"reset-shared-demo"}`. The request is global and irreversible:
+one atomic D1 batch removes workflow history and learned rules, fences old
+versions, and recreates five `NEW` synthetic A–E cases with catalog version 1.
+Reset acknowledgements remain in the ledger across later resets, preventing a
+stale retry from deleting fresh progress. Canceling the UI confirmation is a
+no-op. This route returns 404 outside shared mode; anonymous callers are still
+401. Never replace it with a remote CLI, schema drop/reseed, or initializer.
+
 Local D1 output does not establish hosted D1 persistence, Sites identity
 attestation, Site audience, judge access, or production secrets. The current
 Site verification and the shared link-access rollout procedure are recorded in
 [deployment.md](./deployment.md).
-Do not publish or migrate remotely from these local commands.
+Do not publish or migrate remotely from these local commands. The hosted refresh
+button above is the only supported shared-database reset.

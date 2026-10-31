@@ -22,11 +22,11 @@ publish the shared demo mode with public or spoofable identity headers.
 
 The Site URL is
 [returnops-nhan.loftycream129.chatgpt.site](https://returnops-nhan.loftycream129.chatgpt.site).
-The last verified release was version **3** (runtime revision **5**), built from source
-SHA `ffb3132fe631ae6687e52159f3fb5309ad31ea18`. The latest successful
-deployment was recorded on 2026-10-31 while the Site was owner-private. The
-shared-sign-in rollout version is intentionally not recorded until publishing
-and post-publish checks complete.
+The current verified release is version **4** (runtime revision **6**), built
+from source SHA `e49c9e41e77071b91b7589abdde8ae8aae72a6ee`, deployment
+`appgdep_6ae5adfec4e08191b09041a462ecf72b`. Sites audience is public/link
+access, while ChatGPT sign-in remains required. Version 3 (runtime revision 5)
+was the prior owner-private release.
 
 ## Hosted configuration
 
@@ -43,29 +43,40 @@ their values or user identifiers:
 | `OPENAI_API_KEY` | Server-only provider secret |
 | `OWNER_USER_IDS` | Owner allowlist when shared demo mode is disabled |
 
-`MEMBER_USER_IDS` is used only when shared demo mode is disabled. Missing trust
-or identity is rejected in both modes; with shared demo mode disabled, an
-authenticated ID outside the allowlists is forbidden.
+The current shared release has no `OWNER_USER_IDS` or `MEMBER_USER_IDS` values;
+they are not needed while `RETURNOPS_SIGNED_IN_DEMO=true`. Missing trust or
+identity is rejected in both modes. With shared demo mode disabled, restore the
+appropriate allowlists before publishing and an authenticated ID outside them
+is forbidden.
 
 ## Data and one-time setup
 
-The hosted D1 schema was migrated and verified with the five synthetic A–E
+The hosted D1 schema was migrated and verified with the shared synthetic
 fixtures. The temporary operator initializer was used once during version 2
-provisioning, then its route and secret were removed before version 3. Do not
-restore the initializer or run local seed/reset commands against the hosted DB.
+provisioning, then its route and secret were removed before version 3. The v4
+verification snapshot preserved the prior five completed cases, the shared
+release's additional prepared case, and the accepted rule catalog. The UI's **Làm mới dữ
+liệu demo** button is the only supported hosted refresh: it requires a verified
+signed-in shared-demo OWNER, confirms a global irreversible erase, and
+atomically restores five fresh synthetic A–E cases. Do not use a raw CLI,
+drop/reseed command, or the removed initializer against the hosted DB.
 
 All hosted workflow receipts are `SIMULATED`; no refund, message, or external
 marketplace action is performed.
 
 ## Verification
 
-The genuine signed-in owner session completed hosted A–E verification after a
-compatible redeploy and page reload. Each scenario completed with HTTP 200,
-the expected replay/persistence checks passed, and the five receipts remained
-unchanged. Anonymous and spoofed identity requests returned 401; an owner
-queue request returned 200; an unknown input field returned 400.
+The current genuine signed-in Chrome session, with no owner/member allowlists,
+loaded the public-link Site and used the shared demo OWNER role. Anonymous root
+access redirected to ChatGPT sign-in (307); anonymous and spoofed API requests
+returned 401. The owner queue returned 200, a new C intake returned 201, and
+owner-only carrier review returned 200. The prepared C evaluation completed
+LIVE on `gpt-6.1-terra` as `NEEDS_OWNER_REVIEW` with three risk flags and no
+receipt, ready for judge review. Prior completed cases and learned rule state
+persisted in that verification snapshot; the supported manual refresh may
+intentionally return the shared database to five fresh cases.
 
-Local validation also passed: 34 tests, TypeScript, and build. Lint exits 0
+Local validation also passed: 36 tests, TypeScript, and build. Lint exits 0
 with one pre-existing anonymous-default-export warning in a test adapter.
 
 ## Publish and rollback
@@ -74,10 +85,13 @@ For changes, use the native Sites publish flow: validate locally, save a new
 version, deploy it to the existing Site, then change the Sites audience to link
 access and rerun the hosted checks. This managed Site is not a raw Wrangler or
 Cloudflare Pages target. Roll back to a recorded compatible Site version if
-needed, set `RETURNOPS_SIGNED_IN_DEMO=false`, and restore the appropriate
-allowlists; do not reset the hosted D1 database. Version 2 is not a rollback
+needed, restore the appropriate `OWNER_USER_IDS`/`MEMBER_USER_IDS` values first,
+set `RETURNOPS_SIGNED_IN_DEMO=false`, and change the Sites audience back to
+custom/private access if desired. The shared refresh button is unavailable after
+that flag change; do not substitute a raw hosted D1 reset. Version 2 is not a rollback
 target because it still contained the temporary initializer route.
 
-Separate member authorization, second-account/session, mobile/recovery, and
-full handoff QA remain open. The shared mode is acceptance evidence for a
-simulated demo, not a production-readiness claim.
+Independent second-account testing, mobile/recovery, and full handoff QA remain
+open. The old hosted MEMBER-403 criterion is not applicable in shared mode;
+restricted-role tests remain covered by the default flag-off behavior. This is
+acceptance evidence for a simulated demo, not a production-readiness claim.

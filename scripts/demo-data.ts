@@ -1,8 +1,8 @@
 /** One canonical synthetic dataset, mapped directly from docs/scenarios.md. */
-export async function seedDemo(db: D1Database) {
-  const statements = [
-    db.prepare("INSERT INTO shop_policy(shop_id) VALUES('demo-shop')"),
-  ];
+export function demoStatements(db: D1Database, includePolicy = true) {
+  const statements = includePolicy
+    ? [db.prepare("INSERT INTO shop_policy(shop_id) VALUES('demo-shop')")]
+    : [];
   const fixtures = [
     {
       id: "a",
@@ -98,5 +98,9 @@ export async function seedDemo(db: D1Database) {
         )
         .bind(`builtin-${id}`, reason, condition),
     );
-  await db.batch(statements);
+  return statements;
+}
+
+export async function seedDemo(db: D1Database) {
+  await db.batch(demoStatements(db));
 }

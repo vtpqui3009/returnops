@@ -50,6 +50,11 @@ Copy the names from the repository environment template into server-side `.dev.v
 
 Set `SITES_IDENTITY_VERIFIED=true` only after confirming protected Sites ingress strips public header spoofing. The default uses `OWNER_USER_IDS` and `MEMBER_USER_IDS`; the shared link-access demo additionally opts in with `RETURNOPS_SIGNED_IN_DEMO=true`, which gives every verified signed-in user the synthetic demo OWNER role. Anonymous access remains denied. Never commit keys, user IDs, or environment files.
 
+In shared demo mode, **Làm mới dữ liệu demo** is the supported hosted reset.
+After confirmation it globally and irreversibly restores five fresh synthetic
+A–E cases for all users. Cancel is a no-op. Do not use a remote CLI, schema
+drop/reseed, or the removed initializer; local reset commands remain local-only.
+
 Agent limits are eight tool calls, nine model rounds, and 30 seconds. Registered tools are `read_order`, `check_policy`, `list_missing_evidence`, `draft_reply`, and `escalate`.
 
 ## API behavior
@@ -61,23 +66,25 @@ See `docs/api-contract.md` for routes, payloads, errors, proof rules, idempotent
 ### Hosted Site acceptance and rollout (2026-10-31)
 
 The Site is [ReturnOps on Sites](https://returnops-nhan.loftycream129.chatgpt.site).
-The last verified release was version 3 (runtime revision 5, source SHA
-`ffb3132fe631ae6687e52159f3fb5309ad31ea18`) while owner-private. The next
-release enables link access with `RETURNOPS_SIGNED_IN_DEMO=true`, then changes
-the Sites audience to public/link access. Sign-in remains required; anonymous
-page/API access is still denied. All signed-in users share the five synthetic
-D1 fixtures and receive demo OWNER behavior.
+The current verified release is version 4 (runtime revision 6, source SHA
+`e49c9e41e77071b91b7589abdde8ae8aae72a6ee`, deployment
+`appgdep_6ae5adfec4e08191b09041a462ecf72b`). The Sites audience is public/link
+access, but ChatGPT sign-in remains required. `RETURNOPS_SIGNED_IN_DEMO=true`
+maps every verified signed-in user to the synthetic demo OWNER role; anonymous
+page/API access remains denied and all users share the synthetic D1 state.
 
-A genuine signed-in owner session completed A–E after redeploy and reload. All
-five evaluations completed with HTTP 200 and `SIMULATED` receipts; replay,
-rule acceptance/fresh E evaluation, C flags/no learning, and persistence checks
-passed. Anonymous/spoofed identity requests returned 401, owner queue access
-returned 200, and an unknown request field returned 400. No refund, message, or
-marketplace action was performed.
+A genuine signed-in Chrome session with no configured owner/member allowlists
+loaded the public-link Site. Anonymous root access redirected to ChatGPT
+sign-in (307); anonymous and spoofed API requests returned 401. The shared
+demo queue returned 200, a new C intake returned 201, and owner-only carrier
+review returned 200. The prepared C evaluation completed LIVE on
+`gpt-6.1-terra` as `NEEDS_OWNER_REVIEW` with three risk flags and no receipt,
+ready for judge review. Previous completed cases and the learned rule catalog
+persisted in that verification snapshot. A later manual refresh may intentionally
+return the shared database to five fresh cases. All effects remain `SIMULATED`.
 
 This is simulated demo acceptance evidence, not a production-readiness claim.
-The new link-access release must be rechecked after publication. Mobile/recovery
-and full handoff QA remain open.
+Independent second-account, mobile/recovery, and full handoff QA remain open.
 
 ### Current Issue #11 baseline
 
