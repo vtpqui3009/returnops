@@ -41,6 +41,7 @@
     "**/*.mts"
   ],
   "exclude": [
+    "tests",
     "node_modules",
     "examples",
     "dist",
