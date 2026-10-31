@@ -1,40 +1,59 @@
 # ReturnOps
 
-ReturnOps is a one-shop simulated return/refund workflow. This branch contains the Phase 1 baseline proposal: the ChatGPT Sites Vinext starter, local D1 binding declaration, shared TypeScript contract, and A–E scenario specification. API, agent, migrations, seed, UI, LIVE run, and hosted deployment remain pending.
+ReturnOps is a one-shop simulated return/refund workflow built with Vinext, Cloudflare Workers, and D1. The backend implements the shared A–E contract, guarded mutations, bounded OpenAI Responses calls, owner learning review, and metadata-only proof. Receipts, packets, and replies are always `SIMULATED`.
 
-## Source and scope
+## Stack and scope
 
-- Sites plugin 1.1.2 `vinext-starter`; Vinext 1.0.0-beta.5. `sites()` stays in `vite.config.ts`.
-- Shared contract: `src/shared/contracts.ts` and [API contract](docs/api-contract.md). Proposed fixtures: [scenarios](docs/scenarios.md). Nhân, Quí, and Khoa must review these before splitting lanes.
-- `DB` is the D1 binding declared in `.openai/hosting.json`. Local D1 is separate from hosted D1. R2 is unused. Proof is metadata only; receipt, packet, and reply are always SIMULATED. No buyer send, marketplace submission, or payment occurs.
-- Planned provider: OpenAI Responses API only. Model ID and real tool-calling probe await team approval. The example environment template contains names and placeholders only; never commit secrets.
-- The source scaffold was added during the hackathon. The brainstorm context and plan were prepared earlier; no rehearsal implementation was copied.
+- Sites/Vinext starter with `sites()` in `vite.config.ts`.
+- D1 binding `DB`; reviewed SQL migration authority in `drizzle/0001_returnops.sql`.
+- Shared wire types in `src/shared/contracts.ts`; API handlers in `src/server/` and route adapters in `app/api/`.
+- OpenAI Responses API only. Approved model: `gpt-5.6-terra`, configurable through `OPENAI_MODEL`.
+- No R2, payment, buyer messaging, marketplace submission, or real customer data.
 
-## Local baseline
+The scaffold comes from Sites plugin 1.1.2 `vinext-starter` (Vinext 1.0.0-beta.5). The brainstorm context and plan were prepared earlier; backend code and tests were authored in this implementation session. No rehearsal implementation was copied.
 
-Requires Node.js 22.13.0 or newer. The starter uses npm and its committed lockfile.
+Nhân owns server/API, shared types, migrations, seed/reset and initial package/build configuration. Quí owns UI; Khoa owns integration/E2E and deployment configuration after explicit handoff. This session does not change that ownership.
+
+## Install and verify
+
+Requires Node.js 22.13.0 or newer and npm.
 
 ```sh
 npm run install:ci
 npm run build
 npx tsc --noEmit
+npm run lint
+npm test
 ```
 
-After building, query the local D1 binding:
+Local checks pass. The A LIVE smoke passed in an isolated local harness; B–E provider-backed workflow, hosted deployment, protected identity access, UI integration, and judge access remain separate evidence items.
+
+## Local D1
+
+These commands use a fixed local-only Wrangler configuration and persist to `.wrangler/state`. They do not accept a remote target. Reset is explicit and requires its confirmation flag.
 
 ```sh
-npx wrangler d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --command 'SELECT 1 AS binding_ok'
+npm run db:migrate
+npm run db:seed
+npm run db:reset -- --confirm-local-reset
 ```
 
-For future schema work, update `db/schema.ts`, run `npm run db:generate`, inspect and commit generated SQL and metadata, and apply each pending migration to local D1. Seed/reset must be separate and refuse hosted targets. There is no app schema migration or seed/reset script at this baseline.
+`db/schema.ts` is intentionally empty: the reviewed hand-authored migration is the schema authority, so `db:generate` is not part of the backend workflow. A reset clears and re-seeds the same synthetic fixtures; do not run `db:seed` again after reset. The fixtures are described in `docs/scenarios.md`.
 
-`npm run dev` starts local Vinext. The portable starter's loopback sign-in simulation is local only. Hosted Sites sign-in uses protected ingress and `app/chatgpt-auth.ts`; this baseline exposes no authorized app API.
+## Server configuration
 
-## Gate before backend work
+Copy the names from the repository environment template into server-side `.dev.vars` for local Worker runs or Sites secrets/vars when hosted. The Worker does not automatically read `.env`; the provider probe and isolated smoke script read it only as an explicit CLI convenience.
 
-1. Confirm the single intended Site, D1 binding, protected identity ingress, and owner/member user ID allowlists. The Sites account visible in this session listed no existing Site.
-2. Team approves an exact OpenAI model ID, real tool-call probe, proposed DEMO policy (300,000 VND and 7 days inclusive), metadata proof scope, A/B rules, and owner actions for other decisions.
-3. Nhân, Quí, and Khoa review the contract/scenarios; merge the baseline; record the same commit SHA in issues #1, #2, and #3. Only then split `feat/nhan-agent`, `feat/qui-ui`, and `feat/khoa-integration` from it.
-4. Nhân owns initial scaffold configuration, server/API/domain, shared types, migrations, and seed/reset. Quí owns UI. Khoa owns scenario sign-off, integration/E2E, and deployment configuration after explicit handoff.
+Set `SITES_IDENTITY_VERIFIED=true` only after confirming protected Sites ingress strips public header spoofing. Configure `OWNER_USER_IDS` and `MEMBER_USER_IDS` server-side. Missing trust or allowlists fail closed. Never commit keys, user IDs, or environment files.
 
-See [Issue #2](https://github.com/vtpqui3009/returnops/issues/2). LIVE and hosted checks remain NOT RUN until independently proven.
+Agent limits are eight tool calls, nine model rounds, and 30 seconds. Registered tools are `read_order`, `check_policy`, `list_missing_evidence`, `draft_reply`, and `escalate`.
+
+## API behavior
+
+See `docs/api-contract.md` for routes, payloads, errors, proof rules, idempotent replay, and D/E learning. Every mutation requires same-origin `Origin`, JSON, and an `Idempotency-Key`; unknown fields are rejected. A failed evaluation is visible on GET detail while its original 201/202 acknowledgement remains immutable.
+
+## Evidence status
+
+The provider tool-calling probe and isolated local A LIVE smoke passed with `gpt-5.6-terra`; the smoke recorded simulated receipt, replay, and restart persistence. Local D1 migration, seed, reset, build, typecheck, lint, and automated tests passed in this branch. Hosted identity, hosted D1 persistence, UI/API integration, and judge access are not claimed until independently exercised.
+
+Phase 1 baseline was merged in commit `92430915e529ae12f0a7ed5c4b2842d771498e86`; this implementation continues on `feat/nhan-agent`. See Issue #2.
