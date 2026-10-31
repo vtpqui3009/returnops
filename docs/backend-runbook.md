@@ -53,4 +53,22 @@ Evidence review and evaluation use guarded D1 batches. A stale case/evidence/ord
 
 ## Deployment evidence
 
+### First hosted fixture initialization
+
+`POST /api/operator/initialize` is disabled unless the server-only secret
+`RETURNOPS_INITIALIZE_SECRET` has at least 32 characters. An operator sends that
+secret as an Authorization bearer, same-origin `Origin`, JSON content type and
+`{"confirm":"initialize-synthetic-demo"}`. Private Sites service access remains
+a separate edge requirement; it does not impersonate an OWNER/MEMBER.
+
+Run only against the declared dedicated hosted DB after inspecting schema and
+empty tables. Canonical fixtures are inserted in one batch. Repeated calls
+preserve workflow state; unexpected partial data returns 409, never reset/delete.
+Remove the initializer secret after provisioning and deploy again to disable it.
+
+After verifying protected ingress, `GET /api/identity` lets a signed-in visitor
+see their own Site-scoped ID for owner/member allowlist configuration. It grants
+no role and does not return credentials. API access still requires the original
+allowlists and verified identity configuration.
+
 Local D1 output does not establish hosted D1 persistence, Sites identity attestation, private audience, judge access, or production secrets. Record those checks separately after a single authorized Site is configured. Do not publish or migrate remotely from these local commands.
