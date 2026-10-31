@@ -41,6 +41,14 @@
     "**/*.mts"
   ],
   "exclude": [
+    "tests/api",
+    "tests/e2e",
+    "tests/harness",
+    "tests/inventory",
+    "tests/support",
+    "tests/playwright.config.ts",
+    "tests/artifacts",
+    "tests/node_modules",
     "node_modules",
     "examples",
     "dist",
