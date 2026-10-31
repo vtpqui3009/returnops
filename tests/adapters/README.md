@@ -2,7 +2,7 @@
 
 ## Local HTTP with the PR #8 backend
 
-`pr8-local.mjs` runs the backend API dispatcher and authorization/policy code from a trusted backend checkout. Each case uses a fresh, nonpersistent Miniflare D1 database, `drizzle/0001_returnops.sql` and the backend's canonical `seedDemo`. The HTTP listener and database are disposed after the case. No reset is performed against a running app or shared data store.
+`pr8-local.mjs` runs the backend API dispatcher and authorization/policy code from a trusted backend checkout. Each case uses a fresh Miniflare D1 database in its own temporary persistence directory, `drizzle/0001_returnops.sql` and the backend's canonical `seedDemo`. The HTTP listener, database and directory are disposed after the case. Reset operates on that disposable fixture.
 
 The listener binds to an unused `127.0.0.1` port and authenticates random, per-run synthetic MEMBER/OWNER sessions. It rejects inbound Sites identity headers and maps the opaque session cookie to a canonical actor on the server. The backend receives the request through its real `handleApi` entry point. Its injected provider returns a `TEST` result and a synthetic `test-…` response ID. The adapter does not load a provider key. Report this layer as **local HTTP / PR #8 dispatcher / Miniflare D1 / TEST agent / synthetic ingress**. Vinext route wiring, Sites identity, hosted D1, LIVE provider behavior and UI remain separate checks.
 
@@ -17,9 +17,13 @@ $env:RETURNOPS_TEST_EXECUTION_MODE = 'TEST'
 npm --prefix tests run test:api -- --grep A-01
 ```
 
-Run `npm --prefix tests run test:api` for all 16 API entries covering 12 matrix IDs plus the identity probe. Use an unused port above 1023. `RETURNOPS_BACKEND_ROOT` must be absolute. The adapter starts its own server in TEST mode.
+Run `npm --prefix tests run test:api` for all API entries. Use an unused port above 1023. `RETURNOPS_BACKEND_ROOT` must be absolute. The adapter starts its own server with synthetic identity and an injected agent.
 
-Run `npm --prefix tests run test:api -- consistency.spec.ts` for B-N05 and R-N05 only. Their five variants cover proof changes before review and during evaluation, concurrent accept/reject, and both ordered terminal outcomes. The adapter exposes optional `localD1` controls in process. These pause the next TEST agent, change proof tracking and proof/aggregate evidence versions in the disposable fixture, and read selected SQL counts. The proof change keeps case/order/catalog versions fixed to isolate evidence snapshot fencing. Cleanup releases a held agent before draining HTTP requests. These controls are confined to the test adapter and its nonpersistent database.
+Run `npm --prefix tests run test:api -- consistency.spec.ts` for B-N05 and R-N05 only. Their five variants cover proof changes before review and during evaluation, concurrent accept/reject, and both ordered terminal outcomes. The adapter exposes optional `localD1` controls in process. These pause the next TEST agent, change proof tracking and proof/aggregate evidence versions in the disposable fixture, and read selected SQL counts. The proof change keeps case/order/catalog versions fixed to isolate evidence snapshot fencing. Cleanup releases a held agent before draining HTTP requests. These controls are confined to the test adapter and its disposable database.
+
+Additional controls patch designated fixture facts, seed a foreign-shop resource, reject receipt insertion within a real D1 transaction, lose a response after commit, reopen the same persisted local D1 store, perform canonical reset/seed and disable trusted identity. Each fixture gets a unique temporary persistence directory that cleanup removes. Browser cleanup drains active handlers and closes keepalive sockets before disposing D1.
+
+The `ui-local` project bundles the existing UI component at `RETURNOPS_UI_REF`, serves it in API mode and uses opaque synthetic role cookies. It records the UI SHA separately. A pending-acknowledgement test delivers a genuine immutable review acknowledgement from D1 before releasing its held evaluation, then checks browser polling and completion. This bridge exercises the acknowledgement timing boundary while preserving the backend's actual acknowledgement body. Browser fault cases label injected errors and lost responses explicitly.
 
 ## Adapter for the deployed service
 
