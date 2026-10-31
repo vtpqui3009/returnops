@@ -81,7 +81,8 @@ test('owner verifies carrier proof then disputes through full app', { annotation
   await page.getByLabel('Kết quả đối chiếu (bắt buộc)', { exact: true }).fill('Approved synthetic full-route review');
   await page.getByRole('button', { name: 'Xác minh bằng chứng', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click();
-  await page.getByLabel('Hướng xử lý do bạn chọn').selectOption('DISPUTE');
+  await page.getByRole('combobox', { name: 'Hướng xử lý do bạn chọn' }).click();
+  await page.getByRole('option', { name: 'Khiếu nại yêu cầu hoàn tiền', exact: true }).click();
   await page.getByLabel('Lý do quyết định (bắt buộc)', { exact: true }).fill('Approved synthetic full-route decision');
   await page.getByRole('button', { name: 'Duyệt xử lý đơn này', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click();
@@ -99,7 +100,8 @@ test('owner decision remains a manual simulated receipt', { annotation: { type: 
   await signInAsOwner(page, ownerRuntime);
   await openCase(page, detail, claim);
   await page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }).click();
-  await page.getByLabel('Hướng xử lý do bạn chọn').selectOption('RETURN_THEN_REFUND');
+  await page.getByRole('combobox', { name: 'Hướng xử lý do bạn chọn' }).click();
+  await page.getByRole('option', { name: 'Nhận hàng trả rồi hoàn tiền', exact: true }).click();
   await page.getByLabel('Lý do quyết định (bắt buộc)', { exact: true }).fill('Approved synthetic full-route decision');
   await page.getByRole('button', { name: 'Duyệt xử lý đơn này', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Xác nhận', exact: true }).click();

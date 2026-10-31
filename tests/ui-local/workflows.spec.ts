@@ -32,7 +32,8 @@ async function confirm(page: Page) {
 }
 async function decide(page: Page, value: 'DISPUTE' | 'RETURN_THEN_REFUND') {
   await page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }).click();
-  await page.getByLabel('Hướng xử lý do bạn chọn').selectOption(value);
+  await page.getByRole('combobox', { name: 'Hướng xử lý do bạn chọn' }).click();
+  await page.getByRole('option', { name: value === 'DISPUTE' ? 'Khiếu nại yêu cầu hoàn tiền' : 'Nhận hàng trả rồi hoàn tiền', exact: true }).click();
   await page.getByLabel('Lý do quyết định (bắt buộc)', { exact: true }).fill('Synthetic browser owner decision');
   await page.getByRole('button', { name: 'Duyệt xử lý đơn này', exact: true }).click();
   await confirm(page);
@@ -173,7 +174,8 @@ test('UI-N02: stale decision shows conflict and reloads current versions', { ann
   const c = await seed(runtime.member, 'demo-d');
   await start(page, runtime); await open(page, c.order.id);
   await page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }).click();
-  await page.getByLabel('Hướng xử lý do bạn chọn').selectOption('RETURN_THEN_REFUND');
+  await page.getByRole('combobox', { name: 'Hướng xử lý do bạn chọn' }).click();
+  await page.getByRole('option', { name: 'Nhận hàng trả rồi hoàn tiền', exact: true }).click();
   await page.getByLabel('Lý do quyết định (bắt buộc)', { exact: true }).fill('Stale browser intent');
   await page.getByRole('button', { name: 'Duyệt xử lý đơn này', exact: true }).click();
   const fresh = await runtime.member.evaluate(c.id);

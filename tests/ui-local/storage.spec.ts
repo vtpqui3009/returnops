@@ -98,7 +98,8 @@ test('R-N04: retry a committed browser decision after losing its response', {
     }
   });
   await page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }).click();
-  await page.getByLabel('Hướng xử lý do bạn chọn').selectOption('RETURN_THEN_REFUND');
+  await page.getByRole('combobox', { name: 'Hướng xử lý do bạn chọn' }).click();
+  await page.getByRole('option', { name: 'Nhận hàng trả rồi hoàn tiền', exact: true }).click();
   await page.getByLabel('Lý do quyết định (bắt buộc)', { exact: true }).fill('Synthetic response-loss test');
   await page.getByRole('button', { name: 'Duyệt xử lý đơn này', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeVisible();

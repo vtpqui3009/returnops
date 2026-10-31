@@ -63,7 +63,8 @@ test('UI-N01: mobile owner flow keeps a draft when Escape cancels confirmation',
   await signIn(page, ownerRuntime);
   await openCase(page, detail, claim);
   await page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }).click();
-  await page.getByLabel('Hướng xử lý do bạn chọn').selectOption('RETURN_THEN_REFUND');
+  await page.getByRole('combobox', { name: 'Hướng xử lý do bạn chọn' }).click();
+  await page.getByRole('option', { name: 'Nhận hàng trả rồi hoàn tiền', exact: true }).click();
   const reason = page.getByLabel('Lý do quyết định (bắt buộc)', { exact: true });
   await reason.fill('Synthetic mobile draft retained after cancellation');
   await page.getByRole('button', { name: 'Duyệt xử lý đơn này', exact: true }).click();
@@ -71,7 +72,7 @@ test('UI-N01: mobile owner flow keeps a draft when Escape cancels confirmation',
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toBeHidden();
   await expect(reason).toHaveValue('Synthetic mobile draft retained after cancellation');
-  await expect(page.getByLabel('Hướng xử lý do bạn chọn')).toHaveValue('RETURN_THEN_REFUND');
+  await expect(page.getByRole('combobox', { name: 'Hướng xử lý do bạn chọn' })).toHaveText('Nhận hàng trả rồi hoàn tiền');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect((await ownerRuntime.owner.detail(detail.id)).receipt).toBeNull();
 });
@@ -93,7 +94,8 @@ test('R-N04: browser retries a committed owner decision after its response is lo
   await signIn(page, ownerRuntime);
   await openCase(page, detail, claim);
   await page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }).click();
-  await page.getByLabel('Hướng xử lý do bạn chọn').selectOption('RETURN_THEN_REFUND');
+  await page.getByRole('combobox', { name: 'Hướng xử lý do bạn chọn' }).click();
+  await page.getByRole('option', { name: 'Nhận hàng trả rồi hoàn tiền', exact: true }).click();
   const reason = page.getByLabel('Lý do quyết định (bắt buộc)', { exact: true });
   await reason.fill('Synthetic committed response-loss retry');
   await page.getByRole('button', { name: 'Duyệt xử lý đơn này', exact: true }).click();
