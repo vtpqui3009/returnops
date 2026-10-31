@@ -1,6 +1,6 @@
 # UI review evidence — issue #1
 
-Validated on Windows, Node 24.18.0 / npm 11.16.0, against the merged shared baseline `92430915e529ae12f0a7ed5c4b2842d771498e86`. The latest fetched main is `39d449e` (merged backend PR #8). UI fixes were compared read-only with backend source `db671525f49671b2b2d8ae1e12eac897c881cdf2`; that backend has not been merged into this UI branch. Shared contracts remain unchanged. The UI-only README changes were dropped to avoid colliding with the new backend README; this guide remains the UI run/evidence entry. This PR intentionally delivers mock UI review before backend integration.
+Validated on Windows, Node 24.18.0 / npm 11.16.0. The shared starting point is `92430915e529ae12f0a7ed5c4b2842d771498e86`; final combined code includes latest main `da9dc686acf4bb679f525d1c8bd3164c3d226335` through merge `ddf29ab657835dc7bd3cbbf0b79e76374467a6f9`. UI fixes were compared with exact backend source `db671525f49671b2b2d8ae1e12eac897c881cdf2`. The old overlapping UI README introduction was removed before merging; the complete backend README is retained, with a UI guide link appended. Backend/config/lockfile/contracts are preserved from main. Code merge does not establish real UI/API acceptance; the app still defaults to mock review.
 
 ## Independently run checks
 
@@ -42,6 +42,6 @@ All screenshots contain synthetic fixtures. They were captured through the inter
 
 **NOT RUN:** real API/agent/model calls, D1 migration/seed/persistence, server authorization/idempotency, hosted sign-in/role mapping, full cross-lane E2E, LIVE execution and deployment. UI disabling and fixture guards are not backend enforcement. No action sends to buyers, submits to a marketplace or moves money.
 
-Backend PR [#8](https://github.com/vtpqui3009/returnops/pull/8) is merged on main (`39d449e`). The [UI review comment](https://github.com/vtpqui3009/returnops/pull/10#issuecomment-6539802962) was checked against its exact `db67152` source. This update fixes the three UI P2 findings and timeline mismatch, with faithful independent regression fixtures. It does not merge backend code, certify a D1 race reproduction or claim integrated acceptance. The old README collision is avoided by leaving the baseline README untouched in this UI diff; no backend documentation was overwritten.
+Backend PR [#8](https://github.com/vtpqui3009/returnops/pull/8) and QA PR #9 are included through merged main. The [UI review comment](https://github.com/vtpqui3009/returnops/pull/10#issuecomment-6539802962) was checked against its exact `db67152` source. This update fixes the three UI P2 findings and timeline mismatch, with independent regression fixtures. Source merging and backend unit checks do not certify a browser-to-real-BE race reproduction or integrated acceptance. No backend documentation was overwritten.
 
 Issue #1 stays open until actual API acceptance and team review. The human review column in the [UI handoff](ui-handoff.md) remains pending. CI evidence is reported on the PR for its exact pushed commit; local results above do not imply CI exists or passed.

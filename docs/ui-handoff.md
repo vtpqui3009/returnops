@@ -1,6 +1,6 @@
 # Quí UI lane — issue #1
 
-Shared starting point: merged baseline `92430915e529ae12f0a7ed5c4b2842d771498e86` (PR #5). This lane ports the reviewed same-day prototype into the existing Vinext application. It preserves `sites()`, DB declarations and backend ownership. No shared contract changes, second scaffold, deployment or LIVE claim.
+Shared starting point: merged baseline `92430915e529ae12f0a7ed5c4b2842d771498e86` (PR #5). Latest main `da9dc68` was merged into this branch without rewriting history to resolve PR conflicts. This lane ports the reviewed same-day prototype into the existing Vinext application. It preserves `sites()`, DB declarations and backend ownership. The UI makes no shared contract changes, second scaffold, deployment or LIVE claim.
 
 ## Run and check
 
@@ -12,7 +12,7 @@ npm run lint
 node scripts/check-ui.mjs
 ```
 
-This review branch opens with explicitly labelled TEST mock data when no mode is configured. There are no backend routes in this UI PR. The separate real same-origin HTTP adapter is exercised in browser QA and can be selected with server configuration; failed HTTP calls never silently switch to fixtures.
+This review branch opens with explicitly labelled TEST mock data when no mode is configured. The backend routes now arrive from merged main; the UI diff adds no backend routes. The separate same-origin HTTP adapter is exercised in browser QA with synthetic responses and can be selected with server configuration; failed HTTP calls never silently switch to fixtures. This is not yet real UI/API acceptance.
 
 For the synthetic review walkthrough, simply run `npm run dev`. To select the HTTP adapter, configure its **server-only** Worker binding before starting the dev server:
 
@@ -71,4 +71,4 @@ This is evidence of Codex assisting product development, separate from any agent
 
 ## Remaining cross-lane gates
 
-Backend PR #8 is now merged on main (`39d449e`); this UI branch has not merged it or run real integration. Nhân owns real API routes, D1/migrations/seed and server authorization/idempotency/policy. Khoa owns full E2E/deployment/judge access and submission. Hosted role mapping, final demo policy, model/tool probe and LIVE run are not completed by this PR. TEST success cannot establish any of these. Retest the UI against real endpoints before integrated acceptance/issue closure.
+Backend PR #8 and QA PR #9 arrive from merged main `da9dc68`. Merging code is separate from real UI/API acceptance. Nhân owns real API routes, D1/migrations/seed and server authorization/idempotency/policy. Khoa owns full E2E/deployment/judge access and submission. Hosted role mapping, final demo policy, model/tool probe and LIVE run are not completed by this UI work. TEST success cannot establish any of these. Retest the UI against real endpoints before integrated acceptance/issue closure.
