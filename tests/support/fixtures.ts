@@ -24,8 +24,8 @@ export const test = base.extend<{
     let adapter: RuntimeAdapter;
     let prepared: PreparedScenario;
     try {
-      const module = await import(pathToFileURL(resolve(adapterPath)).href);
-      adapter = module.default as RuntimeAdapter;
+      const importedAdapter = await import(pathToFileURL(resolve(adapterPath)).href);
+      adapter = importedAdapter.default as RuntimeAdapter;
       if (typeof adapter?.prepare !== 'function') throw new Error('Invalid adapter');
       prepared = await adapter.prepare({ scenario, baseURL, uiBundleRoot: testInfo.project.name === 'ui-local' ? resolve('artifacts/ui-bundle') : undefined });
     } catch { blocked('Runtime adapter setup failed; inspect the adapter locally without publishing session values.'); }

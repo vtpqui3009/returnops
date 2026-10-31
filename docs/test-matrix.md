@@ -1,5 +1,30 @@
 # ReturnOps — A–E test matrix
 
+## Issue #11 current baseline — 2026-10-31
+
+| Provenance | Result | Scope / limit |
+| --- | --- | --- |
+| Current uncommitted Issue #11 worktree, base HEAD `1e115276aaf0a7a0a5611cd2564b6ded17f11dd0` | root and QA typechecks PASS | Worktree evidence, not a committed-SHA proof and not full-route or hosted evidence. |
+| Same worktree | Node tests PASS, 27/27; UI checks PASS, 22/22; QA harness PASS, 10/10 | Local API/recovery, UI checks, and test-harness guards. |
+| Same worktree | lint PASS with 2 warnings | Anonymous default exports in `tests/adapters/pr8-local.mjs` and `tests/adapters/full-route-local.mjs`; no lint errors. |
+| Sites account / project | NOT RUN | Owner Site list empty; `.openai/hosting.json` has no project ID. No private target available. |
+| Provider route configuration | NOT RUN | A model setting is present in ignored local environment; Worker mapping and real-route provider execution have not been verified. No values recorded. |
+
+This baseline does not advance integrated-browser, private Site/D1, ingress, persistence, or LIVE provider rows. Re-run affected checks after source changes; keep Phase 2 and Phase 3 incomplete until their separate acceptance evidence exists. Full details: `plans/reports/test-261031-1352-GH-11-baseline-report.md`.
+
+## Issue #11 local route update — 2026-10-31
+
+| Layer | Result | Scope / limit |
+| --- | --- | --- |
+| Isolated local Vinext/D1 | PASS | Migration, canonical seed, API mode, local sign-in/queue and intake against seeded order. Dirty worktree at `1e115276aaf0a7a0a5611cd2564b6ded17f11dd0`. |
+| Local route Chrome | PASS | Run `9000094e-daa0-40fb-8dff-2f251ed94151`: 14 PASS, 0 FAIL. Primary rows are A-01, B-01, B-03, B-N01, B-N04, C-01, D-01, AUTH-N01, UI-N01, UI-N02, UI-N03, R-N04, DATA-N01 and SEC-N01; owner-only synthetic identity. |
+| Local route Chrome | NOT RUN | E-01 has no dedicated safe owner-only scenario. E-02 reached LIVE eligibility setup but `AGENT_ESCALATION` produced no suggestion, so accepting a rule and fresh E provenance were not asserted. B-02 and B-N03 behavior was checked within B-01/B-N01 but is not a separately attributed reporter row. |
+| Local role profiles | PASS | Separate disposable profiles: member queue 200 and owner mutation 403; unknown queue 403; disabled trusted identity queue 401. Synthetic local identity only; no ingress/hosted assertion. |
+| Supplementary provider probe | PASS LIVE | Configured model, two rounds and one tool. Does not certify browser route or hosted behavior. |
+| Protected edge and hosted | NOT RUN | No private Site/D1 target, Khoa-accepted SHA or owner-operated hosted fixture authority. |
+
+See `plans/reports/code-review-261031-1352-GH-11-full-route-report.md`. Keep Phase 2 and Phase 3 open.
+
 > Test design for [issue #3](https://github.com/vtpqui3009/returnops/issues/3), based on the UI acceptance criteria in [#1](https://github.com/vtpqui3009/returnops/issues/1) and backend criteria in [#2](https://github.com/vtpqui3009/returnops/issues/2). Prepared on 31 October 2026. **40 of 43 matrix IDs have a PASS in at least one local layer. AUTH-N03 has local partial checks. DEP-N01 and DEP-N02 remain NOT RUN. Vinext/Sites route integration, hosted access and LIVE provider execution require separate evidence.**
 
 Reconciled against shared baseline **`92430915e529ae12f0a7ed5c4b2842d771498e86`**, merged through PR #5. Sources include the [API contract](api-contract.md), [scenarios](scenarios.md), and [shared types](../src/shared/contracts.ts). The latest local integration results use main **`39d449eca4174527cc590efbd2a634455225db26`**, including merged backend PR #8. Full acceptance also requires the remaining layers for each case.

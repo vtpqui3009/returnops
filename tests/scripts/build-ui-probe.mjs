@@ -13,7 +13,7 @@ const ref = process.env.RETURNOPS_UI_REF ?? 'origin/feat/qui-ui';
 const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 const commit = git(['rev-parse', '--verify', ref]).trim();
 await mkdir(source, { recursive: true });
-for (const name of ['api.ts', 'returnops-app.tsx', 'returnops.css', 'test-adapter.ts']) {
+for (const name of ['api.ts', 'presentation.ts', 'returnops-app.tsx', 'returnops.css', 'test-adapter.ts']) {
   await writeFile(join(source, name), git(['show', `${commit}:src/features/returnops/${name}`]));
 }
 await writeFile(join(output, 'entry.tsx'), `import { createRoot } from 'react-dom/client';

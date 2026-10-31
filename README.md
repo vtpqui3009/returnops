@@ -1,5 +1,7 @@
 # ReturnOps
 
+For Issue #11, Nhân owns UI/API integration, backend coordination, and the private hosted handoff; Khoa owns #13 QA and packaging; Quí retains original UI authorship and receives approved #12 pitch/demo evidence only.
+
 ReturnOps is a one-shop simulated return/refund workflow built with Vinext, Cloudflare Workers, and D1. The backend implements the shared A–E contract, guarded mutations, bounded OpenAI Responses calls, owner learning review, and metadata-only proof. Receipts, packets, and replies are always `SIMULATED`.
 
 ## Stack and scope
@@ -53,6 +55,10 @@ Agent limits are eight tool calls, nine model rounds, and 30 seconds. Registered
 See `docs/api-contract.md` for routes, payloads, errors, proof rules, idempotent replay, and D/E learning. Every mutation requires same-origin `Origin`, JSON, and an `Idempotency-Key`; unknown fields are rejected. A failed evaluation is visible on GET detail while its original 201/202 acknowledgement remains immutable.
 
 ## Evidence status
+
+### Current Issue #11 baseline
+
+The current uncommitted Issue #11 worktree passed root and QA typechecks, 27/27 Node tests, 22/22 UI checks, and 10/10 QA harness checks. Lint has two non-blocking anonymous-default-export warnings in local test adapters. A provider model setting is present in the ignored local environment, but Worker binding and real-route provider execution remain unverified. No full-route browser or hosted result is claimed here. Details: `plans/reports/test-261031-1352-GH-11-baseline-report.md`.
 
 The provider tool-calling probe and isolated local A LIVE smoke passed with `gpt-5.6-terra`; the smoke recorded simulated receipt, replay, and restart persistence. Local D1 migration, seed, reset, build, typecheck, lint, and automated tests passed in this branch. Hosted identity, hosted D1 persistence, UI/API integration, and judge access are not claimed until independently exercised.
 

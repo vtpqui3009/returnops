@@ -30,7 +30,7 @@ function pick(value: unknown, keys: string[]): Record<string, string | number | 
 }
 
 function safeAttachment(a: TestResult['attachments'][number]) {
-  if (!['fixture-run', 'terminal-case', 'consistency-check', 'storage-retry-probe', 'proof-reference-probe', 'ui-observation', 'policy-agent-probe'].includes(a.name)) return;
+  if (!['fixture-run', 'terminal-case', 'consistency-check', 'storage-retry-probe', 'proof-reference-probe', 'ui-observation', 'policy-agent-probe', 'full-route-observation', 'e-learning-eligibility'].includes(a.name)) return;
   if (a.contentType !== 'application/json' || !a.body) throw new Error('Expected an in-memory JSON attachment.');
   const data: unknown = JSON.parse(a.body.toString('utf8'));
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Invalid QA evidence object.');
@@ -39,6 +39,8 @@ function safeAttachment(a: TestResult['attachments'][number]) {
   if (a.name === 'proof-reference-probe') return pick(data, ['controlRequests', 'referenceRequests', 'submittedReferences', 'observationScope']);
   if (a.name === 'ui-observation') return pick(data, ['caseId', 'caseStatus', 'receiptId', 'sourceCaseId', 'receiptCount', 'ruleCount', 'transitionCount', 'evaluationCount', 'activeRulesVersion']);
   if (a.name === 'policy-agent-probe') return pick(data, ['phase', 'caseId', 'caseVersion', 'evidenceVersion', 'activeRulesVersion', 'status', 'decision', 'operationId', 'operationStatus', 'errorCode', 'receiptCount', 'ruleCount', 'transitionCount', 'evaluationCount']);
+  if (a.name === 'full-route-observation') return pick(data, ['caseId', 'operationId', 'executionMode', 'receiptId', 'sourceCaseId', 'status']);
+  if (a.name === 'e-learning-eligibility') return pick(data, ['caseId', 'orderId', 'amountVnd', 'reasonGroup', 'itemCondition', 'status', 'suggestionId']);
   if (a.name === 'consistency-check') return pick(data, [
     'variant', 'caseId', 'proofId', 'suggestionId', 'errorCode', 'initialEvidenceVersion',
     'finalEvidenceVersion', 'initialProofVersion', 'finalProofVersion', 'reviewStatus',
