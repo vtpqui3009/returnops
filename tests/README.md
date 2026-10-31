@@ -74,6 +74,12 @@ Before enabling `test:e2e`, coordinate routes and stable locators with Quí, imp
 
 Keep case approval, rule acceptance and fresh evaluation separate. C requires current VERIFIED delivery proof. Proof references must remain plain text; SEC-N01 needs both browser observation and server/controlled endpoint request evidence, not only a screenshot. API result checks do not establish any of these browser acceptance criteria.
 
+### Disposable full-route LIVE target
+
+`test:e2e:local-live` creates a temporary application copy, gives it its own local Worker/D1 state, applies the canonical migration and seed once, then starts the real Vinext app. It copies no repository credentials and creates no state in the checkout. Supply the provider key and model explicitly through the full-route launcher environment; the command exits `NOT RUN` if either is absent. Its loopback sentinel signs in through the local Sites flow and reads the real `/api/cases` route before announcing the origin.
+
+The one local Sites identity maps to one owner actor, so it cannot prove distinct member and owner role sessions. Use an approved protected preview with real separate sessions for role-bound acceptance. Set the launcher E2E flag to run the owner-only browser checks against its temporary origin; record the run as local LIVE, never hosted evidence.
+
 ## Reports and evidence
 
 - `tests/artifacts/<selected-projects>/summary.json` records the source commit, dirty-worktree flag, baseline, runner result and per-layer matrix status.
