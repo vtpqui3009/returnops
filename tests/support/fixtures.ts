@@ -25,17 +25,17 @@ export const test = base.extend<{
     try {
       const module = await import(pathToFileURL(resolve(adapterPath)).href);
       adapter = module.default as RuntimeAdapter;
-      if (typeof adapter?.prepare !== 'function') blocked('Adapter must export default { prepare, cleanup? }.');
+      if (typeof adapter?.prepare !== 'function') throw new Error('Invalid adapter');
       prepared = await adapter.prepare({ scenario, baseURL });
-      if (!prepared.fixtureRunId || !prepared.headers?.MEMBER || !prepared.headers?.OWNER) blocked('Adapter must return fixtureRunId and both real role sessions.');
-      if (prepared.executionMode !== (process.env.RETURNOPS_TEST_EXECUTION_MODE ?? 'TEST')) blocked('Server execution mode does not match the explicitly selected test mode (default TEST).');
     } catch { blocked('Runtime adapter setup failed; inspect the adapter locally without publishing session values.'); }
     const allowRemote = process.env.RETURNOPS_TEST_ALLOW_REMOTE === '1';
     try {
+      if (!prepared?.fixtureRunId || !prepared.headers?.MEMBER || !prepared.headers?.OWNER) blocked('Adapter must return fixtureRunId and both role sessions.');
+      if (prepared.executionMode !== (process.env.RETURNOPS_TEST_EXECUTION_MODE ?? 'TEST')) blocked('Server execution mode differs from the requested mode.');
       await testInfo.attach('fixture-run', { body: JSON.stringify({ fixtureRunId: prepared.fixtureRunId, scenario, executionMode: prepared.executionMode }), contentType: 'application/json' });
       await provide({ ...prepared, member: new ApiClient(baseURL, prepared.headers.MEMBER, allowRemote), owner: new ApiClient(baseURL, prepared.headers.OWNER, allowRemote) });
     } finally {
-      await adapter.cleanup?.({ fixtureRunId: prepared.fixtureRunId, baseURL });
+      if (prepared?.fixtureRunId) await adapter.cleanup?.({ fixtureRunId: prepared.fixtureRunId, baseURL });
     }
   }
 });

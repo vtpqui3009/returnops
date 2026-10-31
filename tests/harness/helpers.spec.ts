@@ -4,7 +4,7 @@ import { once } from 'node:events';
 import type { AddressInfo } from 'node:net';
 import type { CaseDetail } from '../../src/shared/contracts';
 import { ApiClient, validateOrigin, waitForEvaluation } from '../support/api';
-import { API_CASE_IDS, E2E_CASE_IDS, readCatalog } from '../support/catalog';
+import { API_CASE_IDS, E2E_CASE_IDS, MAIN_FLOW_IDS, readCatalog } from '../support/catalog';
 
 async function server(handler: (req: IncomingMessage, res: ServerResponse) => void) {
   const instance = createServer(handler);
@@ -93,6 +93,7 @@ test('TEST: matrix IDs and implemented main flows stay linked', () => {
   const catalog = readCatalog();
   expect(new Set(catalog.map(c => c.id)).size).toBe(catalog.length);
   for (const id of [...API_CASE_IDS, ...E2E_CASE_IDS]) expect(catalog.some(c => c.id === id)).toBe(true);
-  expect(API_CASE_IDS).toHaveLength(8);
+  expect(MAIN_FLOW_IDS).toHaveLength(8);
+  expect(new Set(API_CASE_IDS).size).toBe(API_CASE_IDS.length);
   expect(catalog.some(c => c.id === 'SEC-N01')).toBe(true);
 });

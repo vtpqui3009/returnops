@@ -1,15 +1,31 @@
 # Runtime adapter handoff
 
-Nhân owns canonical D1 seed/reset and trusted identity mapping. This skeleton does not invent a reset API, alter backend schema, or forge Sites identity headers.
+## Local HTTP with the PR #8 backend
 
-Create an ignored `local.mjs` here once the real implementation is available. It must default-export the `RuntimeAdapter` interface in `../support/types.ts`:
+`pr8-local.mjs` runs the backend API dispatcher and authorization/policy code from a trusted backend checkout. Each case uses a fresh, nonpersistent Miniflare D1 database, `drizzle/0001_returnops.sql` and the backend's canonical `seedDemo`. The HTTP listener and database are disposed after the case. No reset is performed against a running app or shared data store.
 
-- `prepare({ scenario, baseURL })` resets only an isolated synthetic test shop and returns `{ fixtureRunId, executionMode, headers: { MEMBER, OWNER } }`. Read executionMode from the actual server-side test configuration, not a hardcoded assumption. Both roles must use real sessions accepted by the server's approved identity configuration.
-- Scenario is A, B, C, D or DE; DE seeds D and E together. Use the exact orders/proofs in `docs/scenarios.md`. Normal deliveredAt is seed time minus one day. Initial rules must not already match D/E, and no previous cases/receipts/suggestions should leak across tests.
-- `cleanup({ fixtureRunId, baseURL })` is optional and must only clean that test run. The fixture waits for evaluation completion before cleanup, except failed/timed-out tests; the adapter must safely handle that case.
-- Keep cookies/tokens in local environment or approved storage, not tracked files or logs. Return session headers only; never return `Origin`, `Host`, `Content-Type`, `Idempotency-Key` or `oai-authenticated-user-*` overrides.
-- It must use Nhân's real seed/reset implementation. Do not return canned API responses or treat a mock as product acceptance.
+The listener binds to an unused `127.0.0.1` port and authenticates random, per-run synthetic MEMBER/OWNER sessions. It rejects inbound Sites identity headers and maps the opaque session cookie to a canonical actor on the server. The backend receives the request through its real `handleApi` entry point. Its injected provider returns a `TEST` result and a synthetic `test-…` response ID. The adapter does not load a provider key. Report this layer as **local HTTP / PR #8 dispatcher / Miniflare D1 / TEST agent / synthetic ingress**. Vinext route wiring, Sites identity, hosted D1, LIVE provider behavior and UI remain separate checks.
 
-The module path is resolved from the tests package working directory. Example PowerShell setting, after implementing the adapter: `$env:RETURNOPS_TEST_ADAPTER = './adapters/local.mjs'`.
+Use the backend revision under test (initial target `7fa08cce5603f7d3ee7554e265a3a9c3255e1db1`) in a separate checkout, with its dependencies installed using `npm run install:ci`. The adapter resolves `miniflare` and `tsx` relative to that checkout. Record the actual backend revision alongside the QA commit in your evidence. From the QA repository root:
 
-No adapter is included because the backend seed/reset and roles are not implemented yet. Preflight therefore reports **NOT RUN** until handoff is complete.
+```powershell
+$env:RETURNOPS_BACKEND_ROOT = 'D:\path\to\backend-checkout'
+$env:RETURNOPS_TEST_ADAPTER = './adapters/pr8-local.mjs'
+$env:RETURNOPS_TEST_BASE_URL = 'http://127.0.0.1:5187'
+$env:RETURNOPS_TEST_ALLOW_MUTATIONS = '1'
+$env:RETURNOPS_TEST_EXECUTION_MODE = 'TEST'
+npm --prefix tests run test:api -- --grep A-01
+```
+
+Run `npm --prefix tests run test:api` for the eight main flows, two negative cases and the identity probe. Use an unused port above 1023. `RETURNOPS_BACKEND_ROOT` must be absolute. The adapter starts its own server in TEST mode.
+
+## Adapter for the deployed service
+
+Once the team supplies an isolated deployment and approved identity/session mechanism, create an ignored `local.mjs` here to exercise the deployed routes. Export a default object implementing `RuntimeAdapter` in `../support/types.ts`.
+
+- `prepare({ scenario, baseURL })` sets up an isolated synthetic test shop through the approved seed/reset mechanism. Return `{ fixtureRunId, executionMode, headers: { MEMBER, OWNER } }` with mode obtained from server configuration and real role sessions. Never run the local D1 reset CLI against a hosted target.
+- Supported scenarios are A, B, C, D and DE. DE seeds D and E together. Use `docs/scenarios.md` and the backend fixture factory. Keep prior cases, receipts and suggestions isolated across tests.
+- `cleanup({ fixtureRunId, baseURL })` only cleans the designated test run, including setup for failures or timeouts.
+- Keep session material in approved storage. Return session headers only. Do not override `Origin`, `Host`, `Content-Type`, `Idempotency-Key` or `oai-authenticated-user-*` headers. Keep raw sessions out of files, logs and reports.
+
+The adapter module path is relative to `tests/` when using npm package scripts. The app/hosted adapter depends on trusted role mapping, realistic sessions and approved fixture provisioning.

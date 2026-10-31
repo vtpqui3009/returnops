@@ -19,24 +19,27 @@ The default `test` command runs **harness self-tests only**, using controlled lo
 
 | Layer | Status |
 | --- | --- |
-| Harness | Eight executable self-tests. Local response doubles are infrastructure checks only. |
-| API | Executable draft assertions for A-01, B-01, B-02, B-03, C-01, D-01, E-01 and E-02, using real HTTP calls and shared contract types. They have not been run against ReturnOps. |
-| Remaining matrix cases | Thirty-five explicit `fixme` inventory entries. They are NOT RUN, with no passing placeholder assertions. |
+| Harness | Self-tests cover HTTP helpers, operation polling, catalog linkage and evidence reporting. |
+| API | Eight A–E flows, AUTH-N01 and R-N03 are executable against the PR #8 dispatcher, plus a separate anonymous/MEMBER probe. The probe exercises local denials only. |
+| Remaining matrix cases | Thirty-three planned matrix entries remain in the inventory. |
 | Browser E2E | Twelve planned entries: A–E main flows, UI-N01/02/03 and SEC-N01. No UI driver/selectors are implemented; the E2E command is blocked accordingly. |
-| D1/deployment | No direct database mutation or deployment automation. Nhân/dot owns those operations; they need separate evidence. |
+| D1/deployment | The bundled local adapter creates a fresh Miniflare D1 instance per case. Hosted D1, Sites ingress, deployment and judge access require separate verification. |
 
-Test discovery lists 63 entries: 8 harness tests, 8 API tests, 35 planned matrix assertions and 12 planned E2E assertions. These are not 63 executed product scenarios. Matrix IDs are read from `docs/test-matrix.md`; changing that document updates the planned inventory automatically. Existing executable IDs must remain in the matrix.
+Use `test:list` to inspect discovery by project. Matrix IDs come from `docs/test-matrix.md`. Runner entries include harness checks and planned UI work, so use the per-layer report for acceptance counts.
 
 ## Connect the real API
 
-First coordinate with Nhân to implement the adapter described in [adapters/README.md](adapters/README.md). It resets canonical A–E synthetic fixtures and supplies real approved MEMBER/OWNER sessions. It must not invent a public reset endpoint, forge Sites identity headers, or substitute mocked API responses.
+For local integration, use the checked-in [PR #8 adapter](adapters/README.md) with an isolated backend checkout. It loads the backend's actual dispatcher, SQL migration and seed factory, binds a loopback HTTP listener and injects a TEST provider. The QA client receives synthetic session cookies. No OpenAI credentials are required. Start with A-01, then run the API project.
 
-Start the backend separately after its routes, migrations and seed/reset exist. The test runner does not start the baseline placeholder app or provision a Site. Then configure the test process; for PowerShell:
+For example, in PowerShell:
 
 ```powershell
-$env:RETURNOPS_TEST_BASE_URL = 'http://127.0.0.1:5173'
+$env:RETURNOPS_BACKEND_ROOT = 'D:\path\to\backend-checkout'
+$env:RETURNOPS_TEST_BASE_URL = 'http://127.0.0.1:5187'
 $env:RETURNOPS_TEST_ALLOW_MUTATIONS = '1'
-$env:RETURNOPS_TEST_ADAPTER = './adapters/local.mjs'
+$env:RETURNOPS_TEST_EXECUTION_MODE = 'TEST'
+$env:RETURNOPS_TEST_ADAPTER = './adapters/pr8-local.mjs'
+npm --prefix tests run test:api -- --grep A-01
 npm --prefix tests run test:api
 ```
 
@@ -61,8 +64,8 @@ Keep case approval, rule acceptance and fresh evaluation separate. C requires cu
 - `tests/artifacts/<selected-projects>/summary.json` records the source commit, dirty-worktree flag, baseline, runner result and per-layer matrix status.
 - Harness observations are separate from matrix results. A layer result is not full issue acceptance. Planned/skipped tests remain NOT RUN; failures/timeouts are FAIL at their executed layer. A blocked runtime setup is recorded as NOT RUN with a blocker, while the runner still exits nonzero for the infrastructure failure.
 - API evidence attachments include fixture run ID and selected terminal case/operation/version/receipt/provenance fields; headers and session tokens are excluded. Detailed request logs, browser traces and video are disabled by default.
-- Playwright stores attachment files under `tests/artifacts/results/`. That directory may be cleaned by the next run; archive the entire relevant artifacts directory before replacing it when evidence must be retained. Keep summaries and referenced attachments together.
+- Each execution has a separate archive containing its summary and selected evidence. See [QA evidence](reporting.md) for paths, field selection and handoff.
 - Artifacts, auth state, local adapters and test dependencies are ignored by Git. Review/redact evidence before attaching it to an issue, PR or submission.
 - Update the matrix result/evidence fields only after a real run, using the tested SHA, fixture/environment and actual output. The reporter never rewrites the matrix automatically.
 
-Current product results remain **NOT RUN**: runtime endpoints, canonical seed/reset, trusted identity sessions and UI drivers are unavailable to this skeleton. No deployment or LIVE model verification is claimed.
+The local dispatcher and D1 layer is executable. Vinext route wiring, browser E2E, hosted identity, hosted D1, deployment and LIVE provider runs require their own environment and evidence.

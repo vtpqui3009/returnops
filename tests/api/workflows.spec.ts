@@ -2,7 +2,7 @@ import type { TestInfo } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { test, expect } from '../support/fixtures';
 import { waitForEvaluation, type ApiClient } from '../support/api';
-import { API_CASE_IDS } from '../support/catalog';
+import { MAIN_FLOW_IDS } from '../support/catalog';
 import type { Scenario } from '../support/types';
 import type {
   AcceptSuggestionRequest, AcceptSuggestionResponse, CaseDetail, EvidenceAcknowledgement, OwnerDecisionRequest, OwnerDecisionResponse,
@@ -74,7 +74,7 @@ async function evidence(info: TestInfo, c: CaseDetail) {
   }) });
 }
 
-for (const id of API_CASE_IDS) {
+for (const id of MAIN_FLOW_IDS) {
   const scenario: Scenario = id.startsWith('B') ? 'B' : id.startsWith('E') ? 'DE' : id[0] as Scenario;
   test.describe(id, () => {
     test.use({ scenario });
