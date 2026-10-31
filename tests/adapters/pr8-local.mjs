@@ -77,7 +77,7 @@ export default {
     const fixtureRunId = `pr8-local-${randomUUID()}`;
     const miniflare = new Miniflare({
       modules: true, script: 'export default {fetch(){return new Response(null,{status:404})}}',
-      host: '127.0.0.1', d1Persist: false, d1Databases: { DB: fixtureRunId }
+      host: '127.0.0.1', cf: false, d1Persist: false, d1Databases: { DB: fixtureRunId }
     });
     let server;
     const dispose = async () => {
