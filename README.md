@@ -57,3 +57,7 @@ See `docs/api-contract.md` for routes, payloads, errors, proof rules, idempotent
 The provider tool-calling probe and isolated local A LIVE smoke passed with `gpt-5.6-terra`; the smoke recorded simulated receipt, replay, and restart persistence. Local D1 migration, seed, reset, build, typecheck, lint, and automated tests passed in this branch. Hosted identity, hosted D1 persistence, UI/API integration, and judge access are not claimed until independently exercised.
 
 Phase 1 baseline was merged in commit `92430915e529ae12f0a7ed5c4b2842d771498e86`; this implementation continues on `feat/nhan-agent`. See Issue #2.
+
+## UI review (issue #1)
+
+The four-screen UI defaults to clearly labelled TEST mock data for team review. See the [UI run guide and acceptance checklist](docs/ui-handoff.md) and [validation evidence](docs/ui-validation.md). Server Worker binding `RETURNOPS_UI_MODE=api` selects the separate same-origin HTTP adapter. Mock/browser-harness success does not establish real UI/API, D1 or LIVE acceptance.

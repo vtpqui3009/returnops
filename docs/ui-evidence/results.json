@@ -1,0 +1,134 @@
+{
+  "results": [
+    {
+      "name": "Five canonical cases rendered through HTTP adapter",
+      "pass": true
+    },
+    {
+      "name": "No visitor test/state/reset/file controls",
+      "pass": true
+    },
+    {
+      "name": "Search empty state",
+      "pass": true
+    },
+    {
+      "name": "A displays SIMULATED receipt",
+      "pass": true
+    },
+    {
+      "name": "Stale proof is explicitly labelled, not current verification",
+      "pass": true
+    },
+    {
+      "name": "C cannot close before verification",
+      "pass": true
+    },
+    {
+      "name": "Escape leaves C proof unverified",
+      "pass": true
+    },
+    {
+      "name": "C verified before decision",
+      "pass": true
+    },
+    {
+      "name": "C retains flags and creates no learning",
+      "pass": true
+    },
+    {
+      "name": "Wrong tracking has no receipt or evidence",
+      "pass": true
+    },
+    {
+      "name": "Conflict disables unsafe resubmit until reload",
+      "pass": true
+    },
+    {
+      "name": "Reference draft survives conflict",
+      "pass": true
+    },
+    {
+      "name": "Double submit adds one proof, does not verify",
+      "pass": true
+    },
+    {
+      "name": "SEC-N01 reference is text, never HTML/URL fetch",
+      "pass": true
+    },
+    {
+      "name": "B verification resumes and completes once",
+      "pass": true
+    },
+    {
+      "name": "Lost response does not fake UI success",
+      "pass": true
+    },
+    {
+      "name": "Uncertain write retry reuses exact body/key",
+      "pass": true
+    },
+    {
+      "name": "D produces one pending suggestion, E untouched",
+      "pass": true
+    },
+    {
+      "name": "Cancel activation leaves pending",
+      "pass": true
+    },
+    {
+      "name": "Accept alone does not complete E",
+      "pass": true
+    },
+    {
+      "name": "Separate evaluation posts once with new catalog",
+      "pass": true
+    },
+    {
+      "name": "E provenance and receipt rendered",
+      "pass": true
+    },
+    {
+      "name": "Reload reads API source rather than resetting completed cases",
+      "pass": true
+    },
+    {
+      "name": "Responsive case has no horizontal overflow 1440",
+      "pass": true
+    },
+    {
+      "name": "Responsive rules have no overflow 1440",
+      "pass": true
+    },
+    {
+      "name": "Responsive case has no horizontal overflow 768",
+      "pass": true
+    },
+    {
+      "name": "Responsive rules have no overflow 768",
+      "pass": true
+    },
+    {
+      "name": "Responsive case has no horizontal overflow 375",
+      "pass": true
+    },
+    {
+      "name": "Responsive rules have no overflow 375",
+      "pass": true
+    },
+    {
+      "name": "403 gives warm permission recovery without false data",
+      "pass": true
+    },
+    {
+      "name": "Permission/read retry can recover",
+      "pass": true
+    },
+    {
+      "name": "No browser runtime exceptions",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "postCount": 9
+}

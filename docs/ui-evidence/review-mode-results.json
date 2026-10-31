@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "name": "Default review is explicitly TEST",
+      "pass": true
+    },
+    {
+      "name": "Five synthetic cases available without backend",
+      "pass": true
+    },
+    {
+      "name": "TEST record survives browser refresh",
+      "pass": true
+    },
+    {
+      "name": "Pending suggestion persists without activating E",
+      "pass": true
+    },
+    {
+      "name": "TEST makes no fake real API calls",
+      "pass": true
+    },
+    {
+      "name": "No runtime errors",
+      "pass": true
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,86 @@
+{
+  "results": [
+    {
+      "name": "evaluate: acknowledged dispatch failure offers retry without false receipt",
+      "pass": true
+    },
+    {
+      "name": "evaluate: independent GET does not advance pending work",
+      "pass": true
+    },
+    {
+      "name": "evaluate: retry replays exact POST intent",
+      "pass": true
+    },
+    {
+      "name": "evaluate: one operation and receipt after recovery",
+      "pass": true
+    },
+    {
+      "name": "review: acknowledged dispatch failure offers retry without false receipt",
+      "pass": true
+    },
+    {
+      "name": "review: independent GET does not advance pending work",
+      "pass": true
+    },
+    {
+      "name": "review: retry replays exact POST intent",
+      "pass": true
+    },
+    {
+      "name": "review: one operation and receipt after recovery",
+      "pass": true
+    },
+    {
+      "name": "NEEDS_OWNER_REVIEW: retained FAILED pointer allows explicit fresh evaluation",
+      "pass": true
+    },
+    {
+      "name": "NEEDS_OWNER_REVIEW: failure timeline uses warning icon and Vietnamese label",
+      "pass": true
+    },
+    {
+      "name": "Terminal failure does not lock owner completion controls",
+      "pass": true
+    },
+    {
+      "name": "FAILED recovery layout fits mobile",
+      "pass": true
+    },
+    {
+      "name": "NEEDS_OWNER_REVIEW: fresh evaluation uses current snapshot and distinct operation",
+      "pass": true
+    },
+    {
+      "name": "WAITING_EVIDENCE: retained FAILED pointer allows explicit fresh evaluation",
+      "pass": true
+    },
+    {
+      "name": "WAITING_EVIDENCE: failure timeline uses warning icon and Vietnamese label",
+      "pass": true
+    },
+    {
+      "name": "WAITING_EVIDENCE: fresh evaluation uses current snapshot and distinct operation",
+      "pass": true
+    },
+    {
+      "name": "REJECTED record exposes no unsupported review actions",
+      "pass": true
+    },
+    {
+      "name": "Replacement is a separate metadata submission preserving source/type and rejected history",
+      "pass": true
+    },
+    {
+      "name": "Only replacement SUBMITTED record exposes review",
+      "pass": true
+    },
+    {
+      "name": "No browser runtime exceptions in independent recovery flows",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "fixture": "Independent read-only GET / durable POST replay contract fixture; no real BE"
+}

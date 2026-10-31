@@ -1,0 +1,10 @@
+import { spawnSync } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+const output = path.resolve("work/ui-tests");
+mkdirSync(output, { recursive: true });
+writeFileSync(path.join(output, "package.json"), '{"type":"commonjs"}\n');
+const compile = spawnSync(process.execPath, ["node_modules/typescript/bin/tsc", "src/features/returnops/api.ts", "src/features/returnops/presentation.ts", "src/features/returnops/test-adapter.ts", "--outDir", output, "--rootDir", "src", "--target", "ES2022", "--module", "commonjs", "--moduleResolution", "node", "--lib", "ES2022,DOM", "--strict", "--skipLibCheck"], { stdio: "inherit" });
+if (compile.status !== 0) process.exit(compile.status || 1);
+const tests = spawnSync(process.execPath, ["--test", "tests/ui/api.test.cjs", "tests/ui/recovery.test.cjs"], { stdio: "inherit" });
+process.exit(tests.status || 0);
