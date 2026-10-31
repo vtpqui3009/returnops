@@ -1,8 +1,8 @@
 # ReturnOps — A–E test matrix
 
-> Test design for [issue #3](https://github.com/vtpqui3009/returnops/issues/3), based on the UI acceptance criteria in [#1](https://github.com/vtpqui3009/returnops/issues/1) and backend criteria in [#2](https://github.com/vtpqui3009/returnops/issues/2). Prepared on 31 October 2026. **10 of 43 matrix IDs have a local API-layer PASS. Browser E2E, hosted deployment and judge access remain NOT RUN.**
+> Test design for [issue #3](https://github.com/vtpqui3009/returnops/issues/3), based on the UI acceptance criteria in [#1](https://github.com/vtpqui3009/returnops/issues/1) and backend criteria in [#2](https://github.com/vtpqui3009/returnops/issues/2). Prepared on 31 October 2026. **12 of 43 matrix IDs have a local API-layer PASS. Browser E2E, hosted deployment and judge access remain NOT RUN.**
 
-Reconciled against shared baseline **`92430915e529ae12f0a7ed5c4b2842d771498e86`**, merged through PR #5. Sources: [API contract](api-contract.md), [scenarios](scenarios.md), and [shared types](../src/shared/contracts.ts). The local integration results below use backend PR #8. Full acceptance also requires the remaining layers for each case.
+Reconciled against shared baseline **`92430915e529ae12f0a7ed5c4b2842d771498e86`**, merged through PR #5. Sources include the [API contract](api-contract.md), [scenarios](scenarios.md), and [shared types](../src/shared/contracts.ts). The latest local integration results use main **`39d449eca4174527cc590efbd2a634455225db26`**, including merged backend PR #8. Full acceptance also requires the remaining layers for each case.
 
 ## Scope and result reporting
 
@@ -85,10 +85,10 @@ Suggestion status is `PENDING | ACCEPTED | REJECTED`; ACTIVE refers to the accep
 | UI-N02 | UI sends a stale version and receives `409`. | Show conflict, reload the current version and let the user decide again; do not silently overwrite. | Integrated UI | NOT RUN |
 | DATA-N01 | Refresh/restart after a confirmed mutation; run an intentional reset. | D1 preserves saved data across refresh/restart; reset restores known fixtures without damaging schema or data outside the demo scope. | D1 + UI | NOT RUN |
 | DEP-N01 | Privately deploy under one coordinator; verify bindings/migrations. | URL works with its access level recorded; data persists after refresh; local D1 is not confused with hosted D1. Judge access is a separate checkpoint after team approval of sharing. | Deploy + D1 | NOT RUN |
-| B-N05 | Verify B's proof concurrently with changing current tracking/proof, testing both commit orders. | At resume, only VERIFIED proof still matching the current order/tracking is used; stale proof cannot complete the case. | API + D1 | NOT RUN |
+| B-N05 | Verify B's proof concurrently with changing current tracking/proof, testing both commit orders. | At resume, only VERIFIED proof still matching the current order/tracking is used; stale proof cannot complete the case. | API + D1 | API PASS (local TEST) |
 | R-N03 | Reuse a key with changed validated input (including expected versions) in the same scope; also reuse it across different authorized scopes. | Same scope/different hash returns 409 IDEMPOTENCY_CONFLICT without mutation. Scope is (shop, actor ID, method, resource/action, key); separate scopes must not replay each other's result or be assumed globally conflicting. Auth/validation precede replay. | API + D1 | API PASS (local TEST) |
 | R-N04 | Mutation commits but the response is lost; client retries with the same key. | Final state, receipt and audit remain consistent without duplicates; UI reloads the confirmed result rather than showing a false error or success. | API + D1 + UI | NOT RUN |
-| R-N05 | Accept and reject the same suggestion concurrently; repeat each action after a decision. | Exactly one valid final suggestion state (ACCEPTED or REJECTED); never both. At most one new active semantic rule/catalog increment; same-key retries replay original status/body. Fresh-key terminal-transition response remains to be specified. | API + D1 | NOT RUN |
+| R-N05 | Accept and reject the same suggestion concurrently; repeat each action after a decision. | Exactly one valid final suggestion state (ACCEPTED or REJECTED); never both. At most one new active semantic rule/catalog increment; same-key retries replay original status/body. Fresh-key terminal actions return 409 without mutation in the tested backend. | API + D1 | API PASS (local TEST) |
 | DATA-N02 | Inject a failure between mutation and audit event, or between decision and receipt; then retry. | No completed state lacks its corresponding event/receipt and no event records a mutation that did not happen; data is consistent after retry. Choose fault injection points based on backend design. | API + D1 | NOT RUN |
 | AGENT-N01 | Missing key/model, provider error/refusal, invalid tool arguments, timeout or tool/round budget exhaustion. | Evaluation fails closed with a redacted error, no automatic completion/receipt/rule. Original 201/202 acknowledgement is unchanged on replay; GET detail exposes failure, and UI does not report LIVE success. Proposed budgets: 8 tool calls, 9 rounds, 30 seconds, pending team confirmation. | API + UI | NOT RUN |
 | AGENT-N02 | Model proposes an unallowed tool, self-approves, or returns a result beyond a guardrail. | Server rejects/does not execute the unauthorized action; policy controls the result and no unauthorized mutation occurs. | API + D1 | NOT RUN |
@@ -109,9 +109,9 @@ Suggestion status is `PENDING | ACCEPTED | REJECTED`; ACTIVE refers to the accep
 ## Remaining execution decisions
 
 - Confirm team adoption of baseline SHA, trusted hosted identity/role mapping, demo policy, exact model ID and real tool-call probe.
-- Repeat the local run on the merged backend SHA. Verify Vinext route wiring, real Sites sessions and integrated UI separately.
+- Repeat the local run when the backend changes. Verify Vinext route wiring, real Sites sessions and integrated UI separately.
 - Clarify error codes for C's missing-proof decision, wrong proof source/type, and same-shop case/evidence mismatch; exact rejection stage for invalid proof submission; invalid Origin/key responses; body/field/page-size limits and pagination order.
-- Clarify active evaluation expiry/recovery, safe polling limits, terminal transitions with fresh keys and backend fault-injection hooks. These are test-design dependencies, not claims of runtime defects.
+- Clarify active evaluation expiry/recovery, safe polling limits and production fault-injection hooks. Document the observed 409 codes for terminal suggestion actions in the shared contract.
 
 ## Minimum evidence for each run
 
@@ -123,19 +123,25 @@ For SEC-N01, also retain the reference markers, rendered text/DOM evidence, brow
 
 | ID | Level / environment | Commit SHA | Result | Evidence (log, redacted response, screenshot/video, event/DB) | Blocker / notes |
 | --- | --- | --- | --- | --- | --- |
-| `AUTH-N01` | Local dispatcher / Miniflare D1 / TEST | QA `57483ad`, backend `7fa08cc` | API PASS | [Run record](evidence/local-api-pr8-7fa08cc.json) | Other layers pending |
-| `R-N03` | Local dispatcher / Miniflare D1 / TEST | QA `57483ad`, backend `7fa08cc` | API PASS | [Run record](evidence/local-api-pr8-7fa08cc.json) | Other layers pending |
-| `A-01` | Local dispatcher / Miniflare D1 / TEST | QA `57483ad`, backend `7fa08cc` | API PASS | [Run record](evidence/local-api-pr8-7fa08cc.json) | Other layers pending |
-| `B-01` | Local dispatcher / Miniflare D1 / TEST | QA `57483ad`, backend `7fa08cc` | API PASS | [Run record](evidence/local-api-pr8-7fa08cc.json) | Other layers pending |
-| `B-02` | Local dispatcher / Miniflare D1 / TEST | QA `57483ad`, backend `7fa08cc` | API PASS | [Run record](evidence/local-api-pr8-7fa08cc.json) | Other layers pending |
-| `B-03` | Local dispatcher / Miniflare D1 / TEST | QA `57483ad`, backend `7fa08cc` | API PASS | [Run record](evidence/local-api-pr8-7fa08cc.json) | Other layers pending |
-| `C-01` | Local dispatcher / Miniflare D1 / TEST | QA `57483ad`, backend `7fa08cc` | API PASS | [Run record](evidence/local-api-pr8-7fa08cc.json) | Other layers pending |
-| `D-01` | Local dispatcher / Miniflare D1 / TEST | QA `57483ad`, backend `7fa08cc` | API PASS | [Run record](evidence/local-api-pr8-7fa08cc.json) | Other layers pending |
-| `E-01` | Local dispatcher / Miniflare D1 / TEST | QA `57483ad`, backend `7fa08cc` | API PASS | [Run record](evidence/local-api-pr8-7fa08cc.json) | Other layers pending |
-| `E-02` | Local dispatcher / Miniflare D1 / TEST | QA `57483ad`, backend `7fa08cc` | API PASS | [Run record](evidence/local-api-pr8-7fa08cc.json) | Other layers pending |
+| `AUTH-N01` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API PASS | [Run record](evidence/local-api-main-39d449e.json) | Other layers pending |
+| `R-N03` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API PASS | [Run record](evidence/local-api-main-39d449e.json) | Other layers pending |
+| `B-N05` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API + local D1 PASS | [Run record](evidence/local-api-main-39d449e.json) | Two proof-change orderings using fixture controls |
+| `R-N05` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API + local D1 PASS | [Run record](evidence/local-api-main-39d449e.json) | Concurrent, accept-first and reject-first variants |
+| `A-01` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API PASS | [Run record](evidence/local-api-main-39d449e.json) | Other layers pending |
+| `B-01` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API PASS | [Run record](evidence/local-api-main-39d449e.json) | Other layers pending |
+| `B-02` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API PASS | [Run record](evidence/local-api-main-39d449e.json) | Other layers pending |
+| `B-03` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API PASS | [Run record](evidence/local-api-main-39d449e.json) | Other layers pending |
+| `C-01` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API PASS | [Run record](evidence/local-api-main-39d449e.json) | Other layers pending |
+| `D-01` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API PASS | [Run record](evidence/local-api-main-39d449e.json) | Other layers pending |
+| `E-01` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API PASS | [Run record](evidence/local-api-main-39d449e.json) | Other layers pending |
+| `E-02` | Local dispatcher / Miniflare D1 / TEST | QA `1f6858c`, backend `39d449e` | API PASS | [Run record](evidence/local-api-main-39d449e.json) | Other layers pending |
 
-The API command exited 0 with 11 passing entries. Ten carry matrix IDs. The additional anonymous 401 / MEMBER proof-review 403 probe covers part of AUTH-N03; hosted identity override remains unverified. The listener uses synthetic role sessions, a TEST agent and the backend dispatcher. No Vinext browser flow, hosted Sites ingress, hosted D1 or LIVE provider was exercised.
+The API command exited 0 with 16 passing entries covering 12 distinct matrix IDs. B-N05 has two variants and R-N05 has three. Thirty-one matrix IDs remain NOT RUN at the API layer. The additional anonymous 401 / MEMBER proof-review 403 probe covers part of AUTH-N03; hosted identity override remains unverified. The listener uses synthetic role sessions, a TEST agent and the backend dispatcher. Vinext browser flows, hosted Sites ingress, hosted D1 and LIVE provider need separate execution.
 
-Independently on backend `7fa08cc`, `npm test` exited 0 (26/26 backend regression tests). On QA `57483ad`, QA typecheck and all 9 harness self-tests passed. For this local run only the backend dispatcher dependency closure (Miniflare, tsx and zod at lockfile versions) was installed. Full application build/lint were outside this run.
+B-N05 changes proof tracking and proof/aggregate evidence versions directly in its disposable D1 fixture. Before review, stale proof versions return 409 STALE_VERSION and fresh versions with mismatched tracking return 409 PROOF_CONTEXT_MISMATCH, without review/resume mutation. During evaluation, a barrier pauses the TEST agent after snapshot capture. The fixture changes only evidence, then releases the agent. The old evaluation fails with STALE_VERSION and creates no receipt. Replaying review returns its original acknowledgement. A fresh evaluation remains WAITING_EVIDENCE because the previously VERIFIED proof no longer matches current tracking.
+
+R-N05 sends accept/reject concurrently over HTTP and exercises both ordered outcomes separately. Exactly one response is 200 and one is 409. SQL observations show one terminal transition event and the original single manual receipt. Acceptance creates one source rule and increments the catalog once; rejection creates no source rule or catalog increment. Winning-key retries replay the original body. Losing-key retries and fresh-key terminal actions return 409 without changes. The tested terminal accept code is RULE_ALREADY_ACTIVE after acceptance and STALE_VERSION after rejection; terminal reject returns STALE_VERSION.
+
+Independently on backend `39d449e`, `npm test` exited 0 (27/27 backend regression tests). On QA `1f6858c`, QA typecheck and all 10 harness self-tests passed. For this local run only the backend dispatcher dependency closure (Miniflare, tsx and zod at lockfile versions) was installed. Full application build/lint were outside this run. The [earlier PR #8 run](evidence/local-api-pr8-7fa08cc.json) remains archived with its original commits.
 
 For WIP/final reporting, count PASS/FAIL/NOT RUN separately for API, integrated UI, D1 and deployment. Record build/typecheck/test commands and exit codes, commit SHA and remaining limitations. Keep secrets and real customer data out of logs, screenshots and the repository.

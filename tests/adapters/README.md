@@ -6,7 +6,7 @@
 
 The listener binds to an unused `127.0.0.1` port and authenticates random, per-run synthetic MEMBER/OWNER sessions. It rejects inbound Sites identity headers and maps the opaque session cookie to a canonical actor on the server. The backend receives the request through its real `handleApi` entry point. Its injected provider returns a `TEST` result and a synthetic `test-…` response ID. The adapter does not load a provider key. Report this layer as **local HTTP / PR #8 dispatcher / Miniflare D1 / TEST agent / synthetic ingress**. Vinext route wiring, Sites identity, hosted D1, LIVE provider behavior and UI remain separate checks.
 
-Use the backend revision under test (initial target `7fa08cce5603f7d3ee7554e265a3a9c3255e1db1`) in a separate checkout, with its dependencies installed using `npm run install:ci`. The adapter resolves `miniflare` and `tsx` relative to that checkout. Record the actual backend revision alongside the QA commit in your evidence. From the QA repository root:
+Use the backend revision under test (latest verified main `39d449eca4174527cc590efbd2a634455225db26`) in a separate checkout, with its dependencies installed using `npm run install:ci`. The adapter resolves `miniflare` and `tsx` relative to that checkout. Record the actual backend revision alongside the QA commit in your evidence. From the QA repository root:
 
 ```powershell
 $env:RETURNOPS_BACKEND_ROOT = 'D:\path\to\backend-checkout'
@@ -17,7 +17,9 @@ $env:RETURNOPS_TEST_EXECUTION_MODE = 'TEST'
 npm --prefix tests run test:api -- --grep A-01
 ```
 
-Run `npm --prefix tests run test:api` for the eight main flows, two negative cases and the identity probe. Use an unused port above 1023. `RETURNOPS_BACKEND_ROOT` must be absolute. The adapter starts its own server in TEST mode.
+Run `npm --prefix tests run test:api` for all 16 API entries covering 12 matrix IDs plus the identity probe. Use an unused port above 1023. `RETURNOPS_BACKEND_ROOT` must be absolute. The adapter starts its own server in TEST mode.
+
+Run `npm --prefix tests run test:api -- consistency.spec.ts` for B-N05 and R-N05 only. Their five variants cover proof changes before review and during evaluation, concurrent accept/reject, and both ordered terminal outcomes. The adapter exposes optional `localD1` controls in process. These pause the next TEST agent, change proof tracking and proof/aggregate evidence versions in the disposable fixture, and read selected SQL counts. The proof change keeps case/order/catalog versions fixed to isolate evidence snapshot fencing. Cleanup releases a held agent before draining HTTP requests. These controls are confined to the test adapter and its nonpersistent database.
 
 ## Adapter for the deployed service
 

@@ -20,8 +20,8 @@ The default `test` command runs **harness self-tests only**, using controlled lo
 | Layer | Status |
 | --- | --- |
 | Harness | Self-tests cover HTTP helpers, operation polling, catalog linkage and evidence reporting. |
-| API | Eight A–E flows, AUTH-N01 and R-N03 are executable against the PR #8 dispatcher, plus a separate anonymous/MEMBER probe. The probe exercises local denials only. |
-| Remaining matrix cases | Thirty-three planned matrix entries remain in the inventory. |
+| API | Eight A–E flows, AUTH-N01, R-N03, B-N05 and R-N05 are executable against the merged backend dispatcher. B-N05 has two variants and R-N05 has three. A separate anonymous/MEMBER probe exercises local denials only. |
+| Remaining matrix cases | Thirty-one planned matrix entries remain in the inventory. |
 | Browser E2E | Twelve planned entries: A–E main flows, UI-N01/02/03 and SEC-N01. No UI driver/selectors are implemented; the E2E command is blocked accordingly. |
 | D1/deployment | The bundled local adapter creates a fresh Miniflare D1 instance per case. Hosted D1, Sites ingress, deployment and judge access require separate verification. |
 
