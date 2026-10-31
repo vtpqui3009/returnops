@@ -10,7 +10,6 @@ import {
   event,
   first,
   loadSnapshot,
-  rows,
   ruleRow,
   snapshotCondition,
   stmt,
@@ -37,21 +36,14 @@ export async function handleSuggestions(
     const status = url.searchParams.get("status");
     if (status && !["PENDING", "ACCEPTED", "REJECTED"].includes(status))
       throw new ApiFault(400, "INVALID_INPUT", "Invalid suggestion status");
-    const suggestions = await rows<Record<string, unknown>>(
-      db,
-      `SELECT * FROM rule_suggestions WHERE shop_id=?${status ? " AND status=?" : ""} ORDER BY id`,
-      ...(status ? [a.shopId, status] : [a.shopId]),
-    );
-    const rules = await rows<Record<string, unknown>>(
-      db,
-      "SELECT * FROM rules WHERE shop_id=? ORDER BY id",
-      a.shopId,
-    );
-    const policy = await first<PolicyRow>(
-      db,
-      "SELECT * FROM shop_policy WHERE shop_id=?",
-      a.shopId,
-    );
+    const result = await db.batch<Record<string, unknown>>([
+      stmt(db, `SELECT * FROM rule_suggestions WHERE shop_id=?${status ? " AND status=?" : ""} ORDER BY id`, ...(status ? [a.shopId, status] : [a.shopId])),
+      stmt(db, "SELECT * FROM rules WHERE shop_id=? ORDER BY id", a.shopId),
+      stmt(db, "SELECT * FROM shop_policy WHERE shop_id=?", a.shopId),
+    ]);
+    const suggestions = result[0].results;
+    const rules = result[1].results;
+    const policy = result[2].results[0] as unknown as PolicyRow | undefined;
     if (!policy)
       throw new ApiFault(503, "NOT_INITIALIZED", "Database not initialized");
     const response: RuleSuggestionQueueResponse = {

@@ -161,7 +161,11 @@ export async function loadSnapshot(
   shop: string,
   id: string,
 ): Promise<Snapshot> {
-  const result = await db.batch<Record<string, unknown>>([
+  const result = await db.batch<Record<string, unknown>>(snapshotStatements(db, shop, id));
+  return decodeSnapshot(result);
+}
+function snapshotStatements(db: Db, shop: string, id: string) {
+  return [
     stmt(db, "SELECT * FROM cases WHERE shop_id=? AND id=?", shop, id),
     stmt(
       db,
@@ -172,7 +176,9 @@ export async function loadSnapshot(
     stmt(db, "SELECT * FROM evidence WHERE shop_id=? AND case_id=?", shop, id),
     stmt(db, "SELECT * FROM rules WHERE shop_id=? ORDER BY id", shop),
     stmt(db, "SELECT * FROM shop_policy WHERE shop_id=?", shop),
-  ]);
+  ];
+}
+function decodeSnapshot(result: D1Result<Record<string, unknown>>[]): Snapshot {
   const c = result[0].results[0] as unknown as CaseRow | undefined;
   if (!c) throw new ApiFault(404, "NOT_FOUND", "Case not found");
   if (!result[1].results[0] || !result[4].results[0])
@@ -274,8 +280,8 @@ export async function detail(
   actor: Actor,
   id: string,
 ): Promise<CaseDetail> {
-  const s = await loadSnapshot(db, actor.shopId, id);
-  const result = await db.batch<Record<string, unknown>>([
+  const all = await db.batch<Record<string, unknown>>([
+    ...snapshotStatements(db, actor.shopId, id),
     stmt(
       db,
       "SELECT * FROM operations WHERE shop_id=? AND case_id=? AND kind='EVALUATION' ORDER BY created_at DESC,rowid DESC LIMIT 1",
@@ -290,6 +296,8 @@ export async function detail(
     ),
     stmt(db, "SELECT * FROM receipts WHERE case_id=?", id),
   ]);
+  const s = decodeSnapshot(all);
+  const result = all.slice(5);
   const op = result[0].results[0] as unknown as OperationRow | undefined;
   const timeline = result[1].results.map((row) => {
     const payload = decode<Record<string, unknown>>(String(row.payload));

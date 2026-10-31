@@ -77,6 +77,8 @@ export async function finalizeFailure(
   mode: ExecutionMode = "LIVE",
 ) {
   const error = { code: fault.code, message: fault.message };
+  const diagnostics = policyFor(s);
+  const fence = snapshotCondition(s, false);
   try {
     await atomic(
       db,
@@ -92,8 +94,11 @@ export async function finalizeFailure(
         ),
         stmt(
           db,
-          `UPDATE cases SET status='TECHNICAL_ERROR',case_version=case_version+1,pending_evaluation_operation_id=NULL,updated_at=unixepoch()
+          `UPDATE cases SET status='TECHNICAL_ERROR',flags=CASE WHEN ${fence.sql} THEN ? ELSE flags END,reasons=CASE WHEN ${fence.sql} THEN ? ELSE reasons END,missing_evidence=CASE WHEN ${fence.sql} THEN ? ELSE missing_evidence END,case_version=case_version+1,pending_evaluation_operation_id=NULL,updated_at=unixepoch()
  WHERE id=? AND shop_id=? AND case_version=? AND pending_evaluation_operation_id=? AND status!='COMPLETED'`,
+          ...fence.values, JSON.stringify(diagnostics.flags),
+          ...fence.values, JSON.stringify(diagnostics.reasons),
+          ...fence.values, JSON.stringify(diagnostics.missingEvidence),
           s.case.id,
           s.case.shop_id,
           s.case.case_version,

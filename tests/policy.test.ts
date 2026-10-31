@@ -52,3 +52,14 @@ test('learned rule generalizes only the approved fit predicate, and flags always
   assert.equal(evaluatePolicy({ ...fitOrder, riskFlags: ['DELIVERY_CONFLICT'] }, [fitProof], [learned], now).status, 'NEEDS_OWNER_REVIEW');
   assert.equal(evaluatePolicy({ ...fitOrder, reasonGroup: 'SIZE_MISMATCH' }, [fitProof], [learned], now).status, 'WAITING_EVIDENCE');
 });
+
+test('delivery disputes require carrier delivery proof and retain monetary risk blocks', () => {
+  const order = { ...baseOrder, reasonGroup: 'DENIED_RECEIPT', itemCondition: 'DELIVERY_DISPUTED', amountVnd: 400_000, riskFlags: ['DELIVERY_CONFLICT', 'REPEATED_COMPLAINTS'] as RiskFlag[] };
+  assert.deepEqual(evaluatePolicy(order, [proof()], [], now).missingEvidence, ['CARRIER_DELIVERY_PROOF']);
+  const result = evaluatePolicy(order, [proof({ source: 'CARRIER', type: 'DELIVERY' })], [], now);
+  assert.equal(result.currentProof, true);
+  assert.deepEqual(result.missingEvidence, []);
+  assert.equal(result.monetaryEligible, false);
+  assert.equal(result.status, 'NEEDS_OWNER_REVIEW');
+  assert.ok(result.flags.includes('OVER_HARD_CAP'));
+});

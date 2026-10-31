@@ -81,12 +81,15 @@ export function evaluatePolicy(
     order.itemCondition === "WRONG_SIZE";
   const damage =
     order.reasonGroup === "DAMAGE" && order.itemCondition === "DAMAGED";
-  const proof = fit
+  const dispute = order.reasonGroup === "DENIED_RECEIPT";
+  const proof = dispute
+    ? currentEvidence(order, evidence, "CARRIER", "DELIVERY", now)
+    : fit
     ? currentEvidence(order, evidence, "BUYER", "ITEM_CONDITION", now)
     : currentEvidence(order, evidence, "SELLER", "PACKING", now);
   const missingEvidence = proof
     ? []
-    : [fit ? "BUYER_ITEM_CONDITION_PROOF" : "SELLER_PACKING_PROOF"];
+    : [dispute ? "CARRIER_DELIVERY_PROOF" : fit ? "BUYER_ITEM_CONDITION_PROOF" : "SELLER_PACKING_PROOF"];
   const monetaryEligible =
     validMoney &&
     validWindow &&

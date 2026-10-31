@@ -263,3 +263,47 @@ test('claim infrastructure faults after durable acknowledgement replay the origi
   const { caseId } = ack as { caseId: string }; const detail = await (await handleApi(get(`/api/cases/${caseId}`), db, config, runner)).json() as { status: string; receipt: unknown };
   assert.equal(detail.status, 'COMPLETED'); assert.ok(detail.receipt);
 });
+
+test('provider failure preserves deterministic C diagnostics in detail and queue', async (t) => {
+  const { runtime, db } = await demo(); t.after(() => runtime.dispose());
+  const fail: AgentRunner = async () => { throw new Error('provider unavailable'); };
+  const ack = await (await handleApi(request('/api/cases', { orderId: 'demo-c', claim: 'Denied receipt' }, 'c-provider-failure'), db, config, fail)).json() as { caseId: string };
+  const detail = await (await handleApi(get(`/api/cases/${ack.caseId}`), db, config, runner)).json() as { status: string; flags: string[]; missingEvidence: string[] };
+  assert.equal(detail.status, 'TECHNICAL_ERROR');
+  for (const flag of ['DELIVERY_CONFLICT', 'REPEATED_COMPLAINTS', 'OVER_HARD_CAP']) assert.ok(detail.flags.includes(flag));
+  assert.deepEqual(detail.missingEvidence, ['CARRIER_DELIVERY_PROOF']);
+  const queue = await (await handleApi(get('/api/cases'), db, config, runner)).json() as { items: { id: string; flags: string[] }[] };
+  assert.deepEqual(queue.items.find(item => item.id === ack.caseId)?.flags, detail.flags);
+});
+
+test('case detail and learning queue keep one D1 snapshot when writes follow a read batch', async (t) => {
+  const { runtime, db } = await demo(); t.after(() => runtime.dispose());
+  const ack = await (await handleApi(request('/api/cases', { orderId: 'demo-a', claim: 'Wrong size' }, 'snapshot-intake'), db, config, runner)).json() as { caseId: string };
+  let batches = 0;
+  const wrapped = new Proxy(db, { get(target, prop) {
+    if (prop === 'batch') return async (...args: Parameters<typeof db.batch>) => {
+      const result = await target.batch(...args);
+      batches++;
+      if (batches === 1) await target.prepare('UPDATE cases SET case_version=case_version+1 WHERE id=?').bind(ack.caseId).run();
+      return result;
+    };
+    const value = Reflect.get(target, prop); return typeof value === 'function' ? value.bind(target) : value;
+  } });
+  const before = await db.prepare('SELECT case_version FROM cases WHERE id=?').bind(ack.caseId).first<{ case_version: number }>();
+  const detail = await (await handleApi(get(`/api/cases/${ack.caseId}`), wrapped, config, runner)).json() as { caseVersion: number };
+  assert.equal(batches, 1);
+  assert.equal(detail.caseVersion, before?.case_version);
+  batches = 0;
+  const queueDb = new Proxy(db, { get(target, prop) {
+    if (prop === 'batch') return async (...args: Parameters<typeof db.batch>) => {
+      const result = await target.batch(...args); batches++;
+      await target.prepare('UPDATE shop_policy SET active_rules_version=active_rules_version+1').run();
+      return result;
+    };
+    const value = Reflect.get(target, prop); return typeof value === 'function' ? value.bind(target) : value;
+  } });
+  const version = await db.prepare('SELECT active_rules_version FROM shop_policy').first<{ active_rules_version: number }>();
+  const queue = await (await handleApi(get('/api/rule-suggestions'), queueDb, config, runner)).json() as { activeRulesVersion: number };
+  assert.equal(batches, 1);
+  assert.equal(queue.activeRulesVersion, version?.active_rules_version);
+});

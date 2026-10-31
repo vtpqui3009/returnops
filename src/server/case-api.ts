@@ -291,9 +291,9 @@ export async function handleCases(
     );
   if (!id) throw new ApiFault(404, "NOT_FOUND", "Route not found");
   // Resource ownership is checked before any stored acknowledgement can be replayed.
-  const s = await caseResource(db, a, id);
   if (segments.length === 3 && request.method === "GET")
     return json(await detail(db, a, id));
+  const s = await caseResource(db, a, id);
   if (request.method !== "POST")
     throw new ApiFault(405, "METHOD_NOT_ALLOWED", "Method not allowed");
   if (segments.length === 4 && segments[3] === "evaluate")
