@@ -22,12 +22,14 @@ publish the shared demo mode with public or spoofable identity headers.
 
 The Site URL is
 [returnops-nhan.loftycream129.chatgpt.site](https://returnops-nhan.loftycream129.chatgpt.site).
-The current release is version **6** (runtime revision **6**), built
-from source SHA `b65112323f80280be30db49317977f57487872a7`, deployment
-`appgdep_6ae5b454d5248191b96f481d38247d15`. Native Sites publication
-succeeded on 2026-10-31. This release translates app-owned copy and new demo
-fixtures into English; persisted case content is unchanged. Version 5 is the
-previous compatible shared-demo release. Sites audience is public/link
+The current release is version **7** (runtime revision **6**), built
+from source SHA `16d6666496e878a98e9a270280457dfa0b560c48`, deployment
+`appgdep_6ae5b524864c8191aa71c443dc823a8f`. Native Sites publication
+succeeded on 2026-10-31. This release makes **Add replacement reference**
+scroll to the evidence form and focus its reference field. The user confirmed
+the local fix; TypeScript, targeted lint, and the packaging build passed.
+Hosted browser interaction was not rerun. Version 6 is the previous compatible
+English shared-demo release. Sites audience is public/link
 access, while ChatGPT sign-in remains required. Version 3 (runtime revision 5)
 was the prior owner-private release.
 
