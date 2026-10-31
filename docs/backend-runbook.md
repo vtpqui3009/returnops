@@ -66,6 +66,10 @@ empty tables. Canonical fixtures are inserted in one batch. Repeated calls
 preserve workflow state; unexpected partial data returns 409, never reset/delete.
 Remove the initializer secret after provisioning and deploy again to disable it.
 
+The first deployment was initialized successfully. Its initialization route has
+since been removed from the published source; the helper and regression tests
+remain for review. Do not restore that route on the existing database.
+
 After verifying protected ingress, `GET /api/identity` lets a signed-in visitor
 see their own Site-scoped ID for owner/member allowlist configuration. It grants
 no role and does not return credentials. API access still requires the original
