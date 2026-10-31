@@ -68,6 +68,7 @@ for (const id of MAIN_FLOW_IDS) {
     await open(page, c.order.id);
     if (id.startsWith('B') && id !== 'B-01') {
       await addProof(page, c);
+      await expect(page.getByText('Chờ đối chiếu', { exact: true })).toBeVisible();
       expect((await member.detail(c.id)).status).toBe('WAITING_EVIDENCE');
       expect((await member.detail(c.id)).receipt).toBeNull();
       if (id === 'B-03') await verify(page);
@@ -84,9 +85,13 @@ for (const id of MAIN_FLOW_IDS) {
     if (id === 'D-01') await decide(page, 'RETURN_THEN_REFUND');
     if (id === 'E-02') {
       await page.getByRole('button', { name: 'Quy tắc của shop', exact: true }).click();
+      await expect(page.getByText(`Danh mục v${c.activeRulesVersion}`, { exact: true })).toBeVisible();
+      await expect(page.getByText('Chờ bạn duyệt', { exact: true })).toBeVisible();
+      await expect(page.locator('.rule-record').getByRole('button', { name: source!, exact: true })).toBeVisible();
       await page.getByRole('button', { name: 'Áp dụng quy tắc cho đơn sau', exact: true }).click();
       await confirm(page);
       await expect(page.getByText('Đã áp dụng', { exact: true })).toBeVisible();
+      await expect(page.getByText(`Danh mục v${c.activeRulesVersion + 1}`, { exact: true })).toBeVisible();
       expect((await member.detail(c.id)).receipt).toBeNull();
       await page.getByRole('button', { name: 'Hàng chờ', exact: true }).click();
       await open(page, c.order.id);
@@ -98,24 +103,54 @@ for (const id of MAIN_FLOW_IDS) {
       const result = await member.detail(c.id);
       expect(result.status).toBe('COMPLETED');
       expect(result.receipt?.mode).toBe('SIMULATED');
+      expect(result.decision).toBe(id === 'C-01' ? 'DISPUTE' : 'RETURN_THEN_REFUND');
       if (source) expect(result.receipt?.sourceCaseId).toBe(source);
       const receipt = result.receipt!.id;
       await page.reload();
       await open(page, c.order.id);
       await expect(page.getByText(receipt, { exact: false })).toBeVisible();
+      const decision = result.decision === 'DISPUTE' ? 'Khiếu nại yêu cầu hoàn tiền' : 'Nhận hàng trả rồi hoàn tiền';
+      await expect(page.locator('.decision-panel').getByRole('heading', { level: 3 })).toHaveText(decision);
+      await expect(page.getByText('Đã xử lý', { exact: true })).toBeVisible();
+      const mode = result.receipt!.completionMode === 'AUTO' ? 'Xử lý tự động' : 'Chủ shop xử lý';
+      await expect(page.locator('.receipt-panel')).toContainText(mode);
+      await expect(page.locator('ol')).toContainText('TEST');
+      if (result.appliedRuleVersion !== null) {
+        await expect(page.getByText(`Quy tắc v${result.appliedRuleVersion} · nguồn ${result.sourceCaseId ?? 'quy tắc shop'}`, { exact: true })).toBeVisible();
+      }
     } else {
       await expect(page.getByText('Chưa có biên nhận.', { exact: false })).toBeVisible();
       expect((await member.detail(c.id)).receipt).toBeNull();
     }
     const result = await member.detail(c.id);
+    if (!completes) {
+      await expect(page.getByText(id.startsWith('B') ? 'Chờ bằng chứng' : 'Chờ chủ shop', { exact: true })).toBeVisible();
+    }
+    if (id === 'D-01') {
+      const catalog = await owner.call<RuleSuggestionQueueResponse>('GET', '/api/rule-suggestions', 200);
+      expect(catalog.activeRulesVersion).toBe(c.activeRulesVersion);
+      expect(catalog.suggestions.find(s => s.sourceCaseId === c.id)).toMatchObject({ status: 'PENDING', ruleId: null });
+      expect(catalog.activeRules.some(rule => rule.sourceCaseId === c.id)).toBe(false);
+      await page.getByRole('button', { name: 'Quy tắc của shop', exact: true }).click();
+      await expect(page.getByText(`Danh mục v${c.activeRulesVersion}`, { exact: true })).toBeVisible();
+      await expect(page.getByText('Chờ bạn duyệt', { exact: true })).toBeVisible();
+      await expect(page.locator('.rule-record').getByRole('button', { name: c.id, exact: true })).toBeVisible();
+      await page.getByRole('button', { name: 'Hàng chờ', exact: true }).click();
+      await open(page, c.order.id);
+    }
+    const decisionText = await page.locator('.decision-panel').getByRole('heading', { level: 3 }).innerText();
+    const provenance = page.getByText(/^Quy tắc v\d+ · nguồn /);
+    const completion = page.locator('.receipt-panel .small');
     await info.attach('ui-observation', { contentType: 'application/json', body: JSON.stringify({
       caseId: c.id, caseStatus: result.status, receiptId: result.receipt?.id ?? null,
+      decisionText, provenanceText: await provenance.count() ? await provenance.innerText() : null,
+      completionText: await completion.count() ? await completion.innerText() : null,
       sourceCaseId: result.sourceCaseId, ...await localD1!.inspect(c.id)
     }) });
   });
 }
 
-test('UI-N01: failed write retries the same browser intent', { annotation: { type: 'matrix-id', description: 'UI-N01' } }, async ({ page, runtime }) => {
+test('UI-N01: failed write retries the same browser intent', { annotation: [{ type: 'matrix-id', description: 'UI-N01' }, { type: 'matrix-variant', description: 'write-retry' }] }, async ({ page, runtime }) => {
   const c = await seed(runtime.member, 'demo-d');
   await start(page, runtime); await open(page, c.order.id);
   const requests: { key: string | undefined; body: string | null }[] = [];
@@ -134,7 +169,7 @@ test('UI-N01: failed write retries the same browser intent', { annotation: { typ
   expect(requests[0].key).toBeTruthy();
 });
 
-test('UI-N02: stale decision shows conflict and reloads current versions', { annotation: { type: 'matrix-id', description: 'UI-N02' } }, async ({ page, runtime }) => {
+test('UI-N02: stale decision shows conflict and reloads current versions', { annotation: { type: 'matrix-id', description: 'UI-N02' } }, async ({ page, runtime }, info) => {
   const c = await seed(runtime.member, 'demo-d');
   await start(page, runtime); await open(page, c.order.id);
   await page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }).click();
@@ -143,7 +178,11 @@ test('UI-N02: stale decision shows conflict and reloads current versions', { ann
   await page.getByRole('button', { name: 'Duyệt xử lý đơn này', exact: true }).click();
   const fresh = await runtime.member.evaluate(c.id);
   await waitForEvaluation(runtime.member, c.id, fresh.operationId);
+  const conflict = page.waitForResponse(response => response.url() === `${runtime.owner.origin}/api/cases/${c.id}/owner-decision` && response.request().method() === 'POST');
   await confirm(page);
+  const denied = await conflict;
+  expect(denied.status()).toBe(409);
+  expect((await denied.json()).error.code).toBe('STALE_VERSION');
   await expect(page.getByRole('alert')).toContainText('Chưa hoàn tất thao tác');
   expect((await runtime.owner.detail(c.id)).receipt).toBeNull();
   await page.getByRole('button', { name: 'Tải lại thông tin', exact: true }).click();
@@ -151,9 +190,13 @@ test('UI-N02: stale decision shows conflict and reloads current versions', { ann
   await page.getByRole('button', { name: 'Duyệt xử lý đơn này', exact: true }).click();
   await confirm(page);
   await expect(page.getByText('Biên nhận mô phỏng', { exact: true })).toBeVisible();
+  const result = await runtime.owner.detail(c.id);
+  await info.attach('ui-observation', { contentType: 'application/json', body: JSON.stringify({
+    caseId: c.id, caseStatus: result.status, receiptId: result.receipt!.id, errorStatus: denied.status()
+  }) });
 });
 
-test('UI-N03: loading, empty, error and paginated queues', { annotation: { type: 'matrix-id', description: 'UI-N03' } }, async ({ page, runtime }) => {
+test('UI-N03: loading, empty, error and paginated queues', { annotation: [{ type: 'matrix-id', description: 'UI-N03' }, { type: 'matrix-variant', description: 'queue' }] }, async ({ page, runtime }) => {
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
   await page.route('**/api/cases?*', async route => { await gate; await route.continue(); });

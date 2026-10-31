@@ -11,6 +11,24 @@ export const API_CASE_IDS = [...MAIN_FLOW_IDS,
 ];
 export const HOSTED_CASE_IDS = ['DEP-N01', 'DEP-N02', 'AUTH-N03'];
 export const E2E_CASE_IDS = [...MAIN_FLOW_IDS, 'UI-N01', 'UI-N02', 'UI-N03', 'SEC-N01'];
+export const LOCAL_UI_CASE_IDS = [...E2E_CASE_IDS, 'R-N04'];
+const API_PARTIAL_IDS = ['AUTH-N03', 'DATA-N01', 'R-N04', 'SEC-N01'];
+const VARIANTS: Record<string, Record<string, string[]>> = {
+  api: {
+    'B-N05': ['change-before-review', 'change-during-evaluation'],
+    'R-N05': ['concurrent', 'accept-first', 'reject-first']
+  },
+  'ui-local': {
+    'UI-N01': ['write-retry', 'pending-ack'],
+    'UI-N03': ['queue', 'learning', 'case-detail', 'owner-review']
+  }
+};
+
+export function requiredVariants(layer: string, id: string): string[] {
+  if (layer === 'api' && API_CASE_IDS.includes(id) && !API_PARTIAL_IDS.includes(id)) return VARIANTS.api[id] ?? ['default'];
+  if (layer === 'ui-local' && LOCAL_UI_CASE_IDS.includes(id)) return VARIANTS['ui-local'][id] ?? ['default'];
+  return [];
+}
 export function readCatalog(): MatrixCase[] {
   const content = readFileSync(fileURLToPath(new URL('../../docs/test-matrix.md', import.meta.url)), 'utf8');
   const rows = [...content.matchAll(/^\| ([A-Z]+-N?\d+) \| ([^\n]+)$/gm)];

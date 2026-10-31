@@ -23,6 +23,8 @@ Run `npm --prefix tests run test:api -- consistency.spec.ts` for B-N05 and R-N05
 
 Additional controls patch designated fixture facts, seed a foreign-shop resource, reject receipt insertion within a real D1 transaction, lose a response after commit, reopen the same persisted local D1 store, perform canonical reset/seed and disable trusted identity. Each fixture gets a unique temporary persistence directory that cleanup removes. Browser cleanup drains active handlers and closes keepalive sockets before disposing D1.
 
+`resetStore` clears and re-seeds the disposable fixture database. Its observations are related-only probes for DATA-N01. They do not verify the application's reset CLI or preservation of non-demo records. Full DATA-N01 remains NOT RUN until that supported entry point is exercised with a protected data sentinel.
+
 The `ui-local` project bundles the existing UI component at `RETURNOPS_UI_REF`, serves it in API mode and uses opaque synthetic role cookies. It records the UI SHA separately. A pending-acknowledgement test delivers a genuine immutable review acknowledgement from D1 before releasing its held evaluation, then checks browser polling and completion. This bridge exercises the acknowledgement timing boundary while preserving the backend's actual acknowledgement body. Browser fault cases label injected errors and lost responses explicitly.
 
 ## Adapter for the deployed service
