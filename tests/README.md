@@ -34,7 +34,7 @@ Install application dependencies in the QA checkout and backend checkout using t
 Use the local adapter variables below, then run:
 
 ```powershell
-$env:RETURNOPS_UI_REF = '9ccf3bee940648594daad353a267dc297e75f68d'
+$env:RETURNOPS_UI_REF = '1e115276aaf0a7a0a5611cd2564b6ded17f11dd0'
 npm --prefix tests run test:all-local
 ```
 
