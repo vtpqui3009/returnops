@@ -1,0 +1,128 @@
+# ReturnOps — A–E test matrix
+
+> Test design for [issue #3](https://github.com/vtpqui3009/returnops/issues/3), based on the UI acceptance criteria in [#1](https://github.com/vtpqui3009/returnops/issues/1) and backend criteria in [#2](https://github.com/vtpqui3009/returnops/issues/2). Prepared on 31 October 2026. **No tests have been executed; all results are currently NOT RUN.**
+
+Reconciled against shared baseline **`92430915e529ae12f0a7ed5c4b2842d771498e86`**, merged through PR #5. Sources: [API contract](api-contract.md), [scenarios](scenarios.md), and [shared types](../src/shared/contracts.ts). This records a static contract comparison, not runtime acceptance or approval of the remaining policy/identity/model gates.
+
+## Scope and result reporting
+
+- Test one simulated shop through the real API and UI. Packets and receipts must be marked `SIMULATED`; do not send to buyers, submit to a marketplace, or transfer money.
+- Mark `PASS` only after executing against an identified commit and recording observable evidence. Mark `FAIL` when the actual result contradicts the expectation. Mark `NOT RUN` when not executed or prerequisites are missing. Label mocks and replays `TEST`/`REPLAY`; they do not count as LIVE tests.
+- Record API/domain, integrated UI, D1 persistence, and private deployment separately. A PASS at one level does not imply a PASS at another.
+- Use the baseline endpoints, payload types, versions and errors below. `docs/scenarios.md` is the single shared fixture specification; seed/reset implementation remains pending. Record any later contract change and the new comparison SHA before changing assertions.
+
+## Prerequisites for execution
+
+| Prerequisite | What to verify |
+| --- | --- |
+| Shared baseline | PR #5 is merged at `9243091`; this matrix has been compared with its documents/types. Team adoption of the same SHA across lanes remains a coordination checkpoint. |
+| Contract | Shapes and routes exist as a proposal. Runtime routes are not implemented; confirm remaining identity/role, policy and model/tool-probe decisions before dependent execution. |
+| Fixtures | Use `demo-a` through `demo-e` from `docs/scenarios.md`; Nhân implements seed/reset from that specification, separately from schema migrations. |
+| Environment | Local and hosted D1 configurations are distinguished; build and typecheck work. Verify Sites access, D1 bindings and private URL separately before deployment QA. |
+
+## Fixture alignment with `docs/scenarios.md`
+
+| Case | Minimum seed data | Test variants |
+| --- | --- | --- |
+| A | `demo-a`, 189,000 VND, `trk-a`; `SIZE_MISMATCH` / `WRONG_SIZE`; current owner-VERIFIED `SELLER` / `PACKING` proof; no risk flags. | Replay the same idempotency key to verify exactly one receipt. |
+| B | `demo-b`, 245,000 VND, `trk-b`; `DAMAGE` / `DAMAGED`; no proof initially; requires current owner-VERIFIED `SELLER` / `PACKING` proof. | Wrong source/order/tracking; correct but unverified proof; stale order version; duplicate event. |
+| C | `demo-c`, 1,250,000 VND, `trk-c`; conflicting delivery claim and three complaints in 90 days; `CARRIER` / `DELIVERY` proof starts SUBMITTED. | Owner must verify current proof before DISPUTE; retain DELIVERY_CONFLICT, REPEATED_COMPLAINTS and OVER_HARD_CAP; no learning. |
+| D | `demo-d`, 199,000 VND, `trk-d`; `FIT_ISSUE` / `UNUSED_TAGS_INTACT`; owner-VERIFIED `BUYER` / `ITEM_CONDITION` proof; no risk flags or matching rule. | Owner RETURN_THEN_REFUND with reason creates PENDING suggestion; concurrent accept or stale version. |
+| E | `demo-e`, 279,000 VND, `trk-e`; **different order and price from D**, same reason/condition and current VERIFIED proof; no risk flags. | Before accept/after reject waits for owner; after accept and fresh evaluation completes with D provenance. Also test predicate mismatch and hard-cap variants. |
+
+Anchor normal delivery times to seed time minus one day. Inject a controlled clock for boundary tests; use integer VND and UTC epoch seconds. Under the baseline policy, monetary completion (AUTO and MANUAL) requires amount ≤300,000 VND and age ≤604,800 seconds, both inclusive. Null/future delivery time blocks monetary completion. DISPUTE is non-monetary. These policy choices still need team confirmation as recorded in PR #5. Initial versions, actor IDs and reset implementation must be supplied by seed/reset, not fabricated in tests.
+
+## API and operation assertions
+
+All mutations require same-origin `Origin`, a documented JSON body and an `Idempotency-Key` of 1–128 printable characters. Load fresh versions before a new intent; preserve the original key and exact validated payload for retries.
+
+| Route | Shared input → success shape | Matrix coverage |
+| --- | --- | --- |
+| `GET /api/cases?status=&cursor=&limit=` | Bounded filters → 200 `CaseQueueResponse` | A-01, UI-N03 |
+| `GET /api/cases/:id` | Case ID → 200 `CaseDetail` | All A–E flows; poll `evaluation.status/result/error`, not just HTTP success |
+| `POST /api/cases` | `IntakeRequest` → 201 `IntakeAcknowledgement` | A-01, B-01, R-N01/R-N04 |
+| `POST /api/cases/:id/evaluate` | `EvaluateRequest` with expected case/catalog versions → 202 `EvaluateAcknowledgement` | E-01/E-02, R-N06 |
+| `POST /api/cases/:id/evidence` | `SubmitEvidenceRequest` → 201 `EvidenceAcknowledgement` | B-02, SEC-N01; metadata/reference only, starts SUBMITTED |
+| `POST /api/cases/:id/evidence/:eid/review` | `ReviewEvidenceRequest` with expected case/evidence versions → 200 `ReviewAcknowledgement` | B-03, C-01, B-N01/B-N03/B-N06 |
+| `POST /api/cases/:id/owner-decision` | `OwnerDecisionRequest` with expected case/catalog versions → 200 `OwnerDecisionResponse` | C-01, D-01, C-N02, AGENT-N03 |
+| `GET /api/rule-suggestions?status=` | Bounded filter → 200 `RuleSuggestionQueueResponse` | D-01, E-01/E-02 |
+| `POST /api/rule-suggestions/:id/accept` | `AcceptSuggestionRequest` with expected suggestion/catalog versions → 200 `AcceptSuggestionResponse` | E-02, R-N02/R-N05 |
+| `POST /api/rule-suggestions/:id/reject` | `RejectSuggestionRequest` with expected suggestion version and reason → 200 `RejectSuggestionResponse` | E-N01, R-N05 |
+
+REQUEST acknowledgements are immutable and are not completion evidence. Intake returns `evaluationOperationId`; explicit evaluate returns `operationId`; proof review can return a nullable `evaluationOperationId`. Poll case detail for the matching operation and a terminal result, with a bounded test timeout. A matching committed request replays its original status/body before stale-version checks, even if the evaluation later fails. A new evaluation after terminal failure needs a new key. Test polling duration and intervals await runtime implementation.
+
+Suggestion status is `PENDING | ACCEPTED | REJECTED`; ACTIVE refers to the accepted rule in `activeRules`, not the suggestion status. Compare `activeRulesVersion` (catalog) separately from `ActiveRule.version`, `caseVersion`, aggregate `evidenceVersion`, per-proof `evidenceVersion` and `suggestionVersion`.
+
+## Main flow matrix
+
+| ID | Setup / trigger | Expected API, domain and data behavior | Expected UI / observable evidence | Result |
+| --- | --- | --- | --- | --- |
+| A-01 | Intake `demo-a` using `IntakeRequest`; receive 201 and follow its evaluation operation through GET detail. | Evaluation completes with case COMPLETED, RETURN_THEN_REFUND and exactly one SIMULATED receipt containing packet/reply; capture audit and versions. Retry creates no second receipt. | Queue and detail show backend result, timeline, AUTO completion and truthful LIVE/TEST/REPLAY execution mode; refresh preserves the result. | NOT RUN |
+| B-01 | Intake demo-b without proof, then follow its operation in GET detail. | WAITING_EVIDENCE with missingEvidence containing SELLER_PACKING_PROOF; no automatic completion or receipt. | UI identifies the missing seller proof and waiting state; no success is shown. | NOT RUN |
+| B-02 | From B-01, submit current SELLER/PACKING metadata through the evidence route. | 201 acknowledgement; proof is SUBMITTED, case remains WAITING_EVIDENCE and no resume operation/receipt is created by submission alone. | UI distinguishes submitted metadata/reference from VERIFIED proof; no uploaded-file or vision-verification claim. | NOT RUN |
+| B-03 | Owner verifies valid proof from B-02 using expected case/evidence versions. | 200 ReviewAcknowledgement supplies a new evaluationOperationId; poll until COMPLETED with one SIMULATED receipt. Audit links current proof ID to the decision; review acknowledgement alone is not completion. | UI shows verification, evaluation progress and final result separately; refresh preserves server state. | NOT RUN |
+| C-01 | Intake C; owner verifies current CARRIER/DELIVERY proof, receives 200 ReviewAcknowledgement, reloads detail/versions, then sends DISPUTE with a reason. | Initial NEEDS_OWNER_REVIEW; owner decision returns 200, COMPLETED and MANUAL + SIMULATED receipt with agentRunId null. All three seeded flags remain; suggestionId null and no learned rule. | UI requires proof verification before decision, displays flags before/after DISPUTE and timeline; Learning inbox has no suggestion from C. | NOT RUN |
+| D-01 | Case D has sufficient proof but no matching rule; owner sends RETURN_THEN_REFUND with a reason and fresh expected case/catalog versions. | 200 OwnerDecisionResponse contains COMPLETED, MANUAL + SIMULATED receipt and suggestionId. Create one PENDING suggestion if eligible; activeRulesVersion stays unchanged. | UI separates case decision from rule acceptance; Learning inbox shows PENDING and source D. | NOT RUN |
+| E-01 | A case E distinct from D has the same conditions; evaluate while D's rule is PENDING. | Terminal evaluation leaves case NEEDS_OWNER_REVIEW with no receipt or applied pending rule; this result must not be reused as a cached later result. | UI shows the current version and state before approval. | NOT RUN |
+| E-02 | Accept D's suggestion (200); reload detail E and submit evaluate with fresh expectedCaseVersion/expectedActiveRulesVersion and a new key (202); poll detail. | Suggestion becomes ACCEPTED with ruleId and a new catalog version, but accept alone does not complete E. Fresh evaluation completes E with RETURN_THEN_REFUND, appliedRuleId/version and sourceCaseId D; receipt remains unique. | UI separates acceptance loading, evaluation PENDING/RUNNING, and terminal result; shows before/after versions and D provenance. | NOT RUN |
+
+## Negative cases, consistency and authorization
+
+| ID | Action / variant | PASS condition | Test level | Result |
+| --- | --- | --- | --- | --- |
+| B-N01 | Attempt owner verification of B proof with wrong order/tracking. | 409 PROOF_CONTEXT_MISMATCH, unchanged case/evidence versions and review state, no mutation/resume/receipt. Submission-time rejection behavior is still to be clarified. | API + UI | NOT RUN |
+| B-N02 | Attach proof with correct identifiers that is not VERIFIED. | No resume; UI does not treat upload as verification. | API + UI | NOT RUN |
+| B-N03 | Use previously valid proof made stale by a change to the current order/tracking. | No resume; audit/response identifies the proof as no longer current. | API + D1 + UI | NOT RUN |
+| B-N04 | Repeat verification/resume events or retry after timeout. | No duplicate completion decision, packet or receipt; idempotency is verifiable. | API + D1 | NOT RUN |
+| C-N01 | Owner resolves C with DISPUTE. | Flags remain; no pending/active learning is created from C. | API + D1 + UI | NOT RUN |
+| D-N01 | Approve case D without accepting the rule. | Rule stays PENDING, active version does not change, and E-N01 remains waiting. | API + D1 + UI | NOT RUN |
+| E-N01 | Evaluate/retry E while D's rule is PENDING or REJECTED. | Rule is not applied; E does not complete because of that suggestion. | API + UI | NOT RUN |
+| E-N02 | Accept the rule, but E exceeds a hard cap or has an escalation flag. | Guardrail still blocks/escalates; the learned rule cannot bypass the hard cap. | API + D1 | NOT RUN |
+| R-N01 | Repeat intake/evaluate/owner decision with the same idempotency key. | No duplicate mutation, intended audit event or receipt; replay response follows the contract. | API + D1 | NOT RUN |
+| R-N02 | Two requests compete to update the same case/rule version, or accept a rule concurrently. | Only one mutation takes effect; stale request receives `409`, except a same-key replay handled per contract; no duplicate active rule/receipt. | API + D1 | NOT RUN |
+| AUTH-N01 | A non-owner actor calls owner decision or accept/reject rule. | Server returns `403` without mutation; UI shows an error and no false success. | API + UI + D1 | NOT RUN |
+| UI-N01 | API fails/times out during a write, or returns a 201/202 operation acknowledgement before evaluation finishes. | UI distinguishes unknown write outcome from accepted work, retries the same intent safely, and never treats an acknowledgement as case completion; poll for actual result/error. | Integrated UI | NOT RUN |
+| UI-N02 | UI sends a stale version and receives `409`. | Show conflict, reload the current version and let the user decide again; do not silently overwrite. | Integrated UI | NOT RUN |
+| DATA-N01 | Refresh/restart after a confirmed mutation; run an intentional reset. | D1 preserves saved data across refresh/restart; reset restores known fixtures without damaging schema or data outside the demo scope. | D1 + UI | NOT RUN |
+| DEP-N01 | Privately deploy under one coordinator; verify bindings/migrations. | URL works with its access level recorded; data persists after refresh; local D1 is not confused with hosted D1. Judge access is a separate checkpoint after team approval of sharing. | Deploy + D1 | NOT RUN |
+| B-N05 | Verify B's proof concurrently with changing current tracking/proof, testing both commit orders. | At resume, only VERIFIED proof still matching the current order/tracking is used; stale proof cannot complete the case. | API + D1 | NOT RUN |
+| R-N03 | Reuse a key with changed validated input (including expected versions) in the same scope; also reuse it across different authorized scopes. | Same scope/different hash returns 409 IDEMPOTENCY_CONFLICT without mutation. Scope is (shop, actor ID, method, resource/action, key); separate scopes must not replay each other's result or be assumed globally conflicting. Auth/validation precede replay. | API + D1 | NOT RUN |
+| R-N04 | Mutation commits but the response is lost; client retries with the same key. | Final state, receipt and audit remain consistent without duplicates; UI reloads the confirmed result rather than showing a false error or success. | API + D1 + UI | NOT RUN |
+| R-N05 | Accept and reject the same suggestion concurrently; repeat each action after a decision. | Exactly one valid final suggestion state (ACCEPTED or REJECTED); never both. At most one new active semantic rule/catalog increment; same-key retries replay original status/body. Fresh-key terminal-transition response remains to be specified. | API + D1 | NOT RUN |
+| DATA-N02 | Inject a failure between mutation and audit event, or between decision and receipt; then retry. | No completed state lacks its corresponding event/receipt and no event records a mutation that did not happen; data is consistent after retry. Choose fault injection points based on backend design. | API + D1 | NOT RUN |
+| AGENT-N01 | Missing key/model, provider error/refusal, invalid tool arguments, timeout or tool/round budget exhaustion. | Evaluation fails closed with a redacted error, no automatic completion/receipt/rule. Original 201/202 acknowledgement is unchanged on replay; GET detail exposes failure, and UI does not report LIVE success. Proposed budgets: 8 tool calls, 9 rounds, 30 seconds, pending team confirmation. | API + UI | NOT RUN |
+| AGENT-N02 | Model proposes an unallowed tool, self-approves, or returns a result beyond a guardrail. | Server rejects/does not execute the unauthorized action; policy controls the result and no unauthorized mutation occurs. | API + D1 | NOT RUN |
+| AUTH-N02 | Use a cross-shop resource ID, mismatched case/evidence IDs or forged actor/reviewer/mode/body fields. | Cross-shop resource returns 404 without disclosure; unknown/forged body fields return 400. Server checks authenticated identity and resource relationships before replay/mutation. Exact code for a same-shop parent/child mismatch remains unspecified. | API + D1 | NOT RUN |
+| E-N03 | Test 299,999/300,000/300,001 VND and delivery ages 604,799/604,800/604,801 seconds, with all other guards passing. | Cap and time window are inclusive; one VND/second above blocks AUTO and MANUAL monetary completion. Final commit rechecks DB time so crossing the window during evaluation cannot complete using an old snapshot. Policy confirmation remains a gate. | API + D1 | NOT RUN |
+| DEP-N02 | Run migration/deployment again against hosted D1 containing demo data. | Repeated migration follows the supported procedure and preserves data and the correct binding; seed/reset does not run destructively on its own. | Deploy + D1 | NOT RUN |
+| B-N06 | Supply BUYER/PACKING or a different proof type for B, even if its identifiers match. | It cannot satisfy SELLER_PACKING_PROOF or resume B; only owner verification of current SELLER/PACKING metadata can create the resume operation. Exact error/status for wrong source/type awaits clarification. | API + UI | NOT RUN |
+| C-N02 | Attempt owner DISPUTE before C's current CARRIER/DELIVERY proof is VERIFIED. | No COMPLETED state or receipt; retain flags and create no suggestion. Reloading after valid review permits C-01. Error code for the missing-proof decision gate remains unspecified. | API + UI + D1 | NOT RUN |
+| E-N04 | Use deliveredAt null or a future timestamp, then attempt automatic and owner-approved monetary completion. | Both paths block completion without substituting current time; UI handles null without fabricating a delivery date. Non-monetary DISPUTE is assessed separately. | API + UI + D1 | NOT RUN |
+| E-N05 | After accepting D's rule, evaluate a different reasonGroup/itemCondition, or remove required current VERIFIED proof. | No automatic completion from that rule. Matching E with its different order and price still completes in E-02; the predicate must not bind to D's order ID or exact price. | API + D1 | NOT RUN |
+| AUTH-N03 | Anonymous request; MEMBER proof review; hosted request attempts to activate local TEST identity. | Anonymous is 401 UNAUTHENTICATED; MEMBER owner action is 403 FORBIDDEN; hosted local-identity override cannot grant access. Assert ApiError envelope with requestId and no unauthorized mutation. | API + UI | NOT RUN |
+| API-N01 | Unknown body fields, malformed values, missing/invalid idempotency key, or invalid Origin. | Unknown/malformed documented body fields return 400; every rejected mutation leaves domain state/receipt unchanged. Exercise key lengths 0/1/128/129 and invalid characters; Origin/key-specific status and size/field limits require confirmation. | API + D1 | NOT RUN |
+| R-N06 | Issue a fresh-key evaluate while an unexpired evaluation is active; later retry after terminal failure. | Competing evaluation returns 409 CASE_BUSY; same-key replay still returns its original acknowledgement. After terminal failure, a new key/fresh versions can start another operation without a duplicate receipt. Lease/expiry behavior awaits backend design. | API + D1 | NOT RUN |
+| AGENT-N03 | After AGENT-N01, owner separately recovers an eligible case using a permitted decision. | 200 owner response has MANUAL + SIMULATED receipt and agentRunId null; failed run is not relabeled LIVE-success and no technical-exception learning is created. Monetary guardrails still apply. | API + UI + D1 | NOT RUN |
+| UI-N03 | Open each screen with loading, empty, API error or paginated queue results. | UI handles each state, uses bounded queue filters/cursor and nextCursor without duplicating/omitting records under the agreed pagination semantics; refresh reloads server state. Pagination bounds/order remain to be specified. | API + integrated UI | NOT RUN |
+| SEC-N01 | Submit proof references containing HTML-like marker text and a controlled test URL; read and render accepted references in case detail/review, then refresh. | Reference remains plain text: no injected DOM, script/event execution, embedded content or automatic preview. Neither server nor browser fetches the reference URL. Submission does not mark proof VERIFIED or resume the case. Use controlled test endpoints and capture browser network plus server-side request evidence; a clean UI alone does not prove no server fetch occurred. | API + UI + network observation | NOT RUN |
+
+## Remaining execution decisions
+
+- Confirm team adoption of baseline SHA, trusted hosted identity/role mapping, demo policy, exact model ID and real tool-call probe.
+- Implement routes, migrations, canonical fixture seed/reset and a test runner before executing these cases. Bind tests to shared types rather than inventing an alternate response model.
+- Clarify error codes for C's missing-proof decision, wrong proof source/type, and same-shop case/evidence mismatch; exact rejection stage for invalid proof submission; invalid Origin/key responses; body/field/page-size limits and pagination order.
+- Clarify active evaluation expiry/recovery, safe polling limits, terminal transitions with fresh keys and backend fault-injection hooks. These are test-design dependencies, not claims of runtime defects.
+
+## Minimum evidence for each run
+
+Record one row per ID and environment; do not combine mock results with real execution.
+
+For asynchronous cases, retain the initial HTTP acknowledgement and operation ID plus the terminal GET detail snapshot. Capture requestId, request key (non-secret test value), actor role, expected/observed versions, receipt ID, flags and rule provenance as applicable. Record executionMode and completionMode separately. Static comparison with the baseline is not a PASS for any runtime case.
+
+For SEC-N01, also retain the reference markers, rendered text/DOM evidence, browser network trace and controlled endpoint/server request log covering submission, review display and refresh. Keep injected markers and URLs confined to the test environment.
+
+| ID | Level / environment | Commit SHA | Result | Evidence (log, redacted response, screenshot/video, event/DB) | Blocker / notes |
+| --- | --- | --- | --- | --- | --- |
+| _Not executed_ | _Runtime API/UI unavailable_ | _Record tested SHA when run_ | NOT RUN | _No runtime evidence yet_ | _Compared with baseline 9243091; routes, migrations and seed/reset pending_ |
+
+For WIP/final reporting, count PASS/FAIL/NOT RUN separately for API, integrated UI, D1 and deployment. Record build/typecheck/test commands and exit codes, commit SHA and remaining limitations. Keep secrets and real customer data out of logs, screenshots and the repository.
