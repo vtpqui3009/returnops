@@ -1,6 +1,6 @@
 # ReturnOps
 
-ReturnOps is a one-shop simulated return/refund workflow. This branch contains the Phase 1 baseline and a frontend review implementation: the ChatGPT Sites Vinext starter, local D1 binding declaration, shared TypeScript contract, A–E scenario specification, and four UI screens with labelled TEST mock data. Real API/agent integration, migrations, seed, LIVE run, and hosted deployment remain pending.
+ReturnOps is a one-shop simulated return/refund workflow. This branch contains the Phase 1 baseline proposal: the ChatGPT Sites Vinext starter, local D1 binding declaration, shared TypeScript contract, and A–E scenario specification. API, agent, migrations, seed, UI, LIVE run, and hosted deployment remain pending.
 
 ## Source and scope
 
@@ -38,7 +38,3 @@ For future schema work, update `db/schema.ts`, run `npm run db:generate`, inspec
 4. Nhân owns initial scaffold configuration, server/API/domain, shared types, migrations, and seed/reset. Quí owns UI. Khoa owns scenario sign-off, integration/E2E, and deployment configuration after explicit handoff.
 
 See [Issue #2](https://github.com/vtpqui3009/returnops/issues/2). LIVE and hosted checks remain NOT RUN until independently proven.
-
-## UI lane
-
-The UI branch adds the four ReturnOps screens and a typed same-origin API adapter. See [UI run guide, acceptance checklist and handoff](docs/ui-handoff.md). This review branch defaults to a clearly labelled synthetic TEST walkthrough. Server-configured API mode never silently falls back to fixtures when routes are unavailable. TEST is not a LIVE agent, D1 persistence or backend acceptance result.

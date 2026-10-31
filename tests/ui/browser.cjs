@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- Optional standalone Playwright harness; no app dependency or backend route is installed. */
+const { closeCheckedBrowser } = require('./browser-session.cjs');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const fs=require('node:fs');const path=require('node:path');
 const {createTestApi,seedTestStore}=require('../../work/ui-tests/features/returnops/test-adapter.js');
@@ -38,5 +39,5 @@ const {RequestFailure}=require('../../work/ui-tests/features/returnops/api.js');
  await page.reload();await ready();check('Reload reads API source rather than resetting completed cases',store.cases['demo-e'].receipt!==null&&await page.locator('.case-row').count()===5);
  for(const width of [1440,768,375]){await page.setViewportSize({width,height:1000});await open('demo-c');check(`Responsive case has no horizontal overflow ${width}`,await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));if(width===375)await shot('case-mobile');await nav('Quy tắc của shop');check(`Responsive rules have no overflow ${width}`,await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
  fault={path:'/api/cases',status:403,code:'FORBIDDEN'};await nav('Hàng chờ');check('403 gives warm permission recovery without false data',await page.getByRole('alert').isVisible()&&await page.locator('.case-row').count()===0);await page.getByRole('button',{name:'Tải lại thông tin',exact:true}).click();await ready();check('Permission/read retry can recover',await page.locator('.case-row').count()===5);
- check('No browser runtime exceptions',errors.length===0);fs.writeFileSync(path.join(screenshots,'results.json'),JSON.stringify({results,errors,postCount:calls.filter(c=>c.method==='POST').length},null,2));console.log(JSON.stringify({passed:results.length,errors}));await browser.close();
+ check('No browser runtime exceptions',errors.length===0);fs.writeFileSync(path.join(screenshots,'results.json'),JSON.stringify({results,errors,postCount:calls.filter(c=>c.method==='POST').length},null,2));console.log(JSON.stringify({passed:results.length,errors}));await closeCheckedBrowser(browser); process.exit(0);
 })().catch(e=>{console.error(e);process.exit(1)});

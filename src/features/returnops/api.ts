@@ -72,7 +72,7 @@ export function friendlyError(error: unknown) {
   if (error.code === "PROOF_CONTEXT_MISMATCH") return "Bằng chứng chưa khớp đơn hoặc vận đơn hiện hành. Tải lại yêu cầu và kiểm tra thông tin nhé.";
   if (error.status === 409) return "Thông tin đã thay đổi. Tải bản mới và xem lại trước khi xác nhận nhé.";
   if (error.status === 404) return "Chưa tìm thấy dữ liệu cho mục này. API có thể chưa sẵn sàng; chưa có thay đổi nào được lưu.";
-  if (error.code === "EVALUATION_FAILED") return "Đánh giá chưa hoàn tất. Yêu cầu chưa được xử lý thành công; bạn có thể tải lại để xem chi tiết.";
+  if (error.code === "EVALUATION_FAILED") return "Đánh giá chưa hoàn tất. Chưa xử lý thành công yêu cầu này; bạn có thể chọn đánh giá lại bằng dữ liệu mới.";
   if (error.status >= 500 && error.code !== "INVALID_RESPONSE") return "Chưa nhận được kết quả xác nhận. Dữ liệu bạn nhập vẫn được giữ; bạn có thể thử lại cùng thao tác nhé.";
   return error.message;
 }
@@ -95,16 +95,29 @@ export async function pollEvaluation(api: ReturnOpsApi, id: string, operationId:
       if (signal.aborted) onAbort();
     });
   }
-  throw new RequestFailure(408, "POLL_TIMEOUT", "Đánh giá vẫn đang chờ. Tải lại để theo dõi; đừng gửi lại yêu cầu mới.");
+  throw new RequestFailure(408, "POLL_TIMEOUT", "Chưa có kết quả sau thời gian chờ. Bạn có thể thử lại thao tác đã xác nhận để tiếp tục theo dõi.");
 }
 
-/** Retains the immutable acknowledgement across polling retries: no second evaluate POST. */
-export function evaluationJob(api: ReturnOpsApi, id: string, onUpdate?: (c: CaseDetail) => void) {
-  let acknowledged: EvaluateAcknowledgement | undefined;
+interface PollOptions { interval?: number; timeout?: number }
+
+/** Each deliberate retry replays the same POST so the server can recover dispatch.
+ * GET polling never drives work, and a retry never creates a fresh intent. */
+export function evaluationJob(api: ReturnOpsApi, id: string, onUpdate?: (c: CaseDetail) => void, options: PollOptions = {}) {
   let request: Intent<EvaluateRequest> | undefined;
   return async (signal: AbortSignal) => {
     if (!request) { const c = await api.detail(id, signal); request = intent({ expectedCaseVersion: c.caseVersion, expectedActiveRulesVersion: c.activeRulesVersion }); }
-    acknowledged ??= await api.evaluate(id, request);
-    return pollEvaluation(api, id, acknowledged.operationId, signal, 800, 30_000, onUpdate);
+    signal.throwIfAborted();
+    const acknowledged = await api.evaluate(id, request);
+    return pollEvaluation(api, id, acknowledged.operationId, signal, options.interval ?? 800, options.timeout ?? 30_000, onUpdate);
+  };
+}
+
+export function evidenceReviewJob(api: ReturnOpsApi, id: string, evidenceId: string, request: Intent<ReviewEvidenceRequest>, onUpdate?: (c: CaseDetail) => void, options: PollOptions = {}) {
+  return async (signal: AbortSignal) => {
+    signal.throwIfAborted();
+    const acknowledged = await api.review(id, evidenceId, request);
+    return acknowledged.evaluationOperationId
+      ? pollEvaluation(api, id, acknowledged.evaluationOperationId, signal, options.interval ?? 800, options.timeout ?? 30_000, onUpdate)
+      : api.detail(id, signal);
   };
 }

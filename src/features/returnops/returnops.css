@@ -15,3 +15,5 @@
 
 .ro-app .field select{width:100%;min-height:46px;font-size:16px;padding:10px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink)}.ro-app [aria-invalid=true]{border-color:var(--danger)}
 .ro-app h1:focus{outline:none}
+/* Timeline outcomes follow canonical server events; failure never uses a success mark. */
+.ro-app .timeline-error .timeline-mark{background:#fbece9;color:#a73626;border-color:#e9bcb5}.ro-app .timeline-error strong{color:#922f24}.ro-app .timeline-progress .timeline-mark,.ro-app .timeline-neutral .timeline-mark{background:#eef1ef;color:#526b60;border-color:#d4ded8}
