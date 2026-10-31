@@ -80,7 +80,9 @@ export default {
       host: '127.0.0.1', cf: false, d1Persist: false, d1Databases: { DB: fixtureRunId }
     });
     let server;
+    let held;
     const dispose = async () => {
+      held?.release();
       try {
         if (server?.listening) {
           // Stop accepting requests and drain any active handler before disposing D1.
@@ -95,12 +97,49 @@ export default {
       await seedDemo(db);
       const { roles, headers } = sessions();
       const config = { SITES_IDENTITY_VERIFIED: 'true', OWNER_USER_IDS: 'qa-owner', MEMBER_USER_IDS: 'qa-member' };
-      server = localIngress(target.origin, roles, request => handleApi(request, db, config, testAgent));
+      const runner = async () => {
+        const current = held;
+        if (current) {
+          current.enter();
+          await current.gate;
+          held = undefined;
+        }
+        return testAgent();
+      };
+      const localD1 = {
+        holdNextEvaluation() {
+          if (held) throw new Error('A TEST evaluation is already held.');
+          let enter, release, expired;
+          const entered = new Promise((resolve, reject) => { enter = resolve; expired = reject; });
+          const gate = new Promise(resolve => { release = resolve; });
+          const timer = setTimeout(() => { expired(new Error('TEST agent did not reach the hold within 5 seconds.')); release(); }, 5000);
+          held = { gate, enter: () => { clearTimeout(timer); enter(); }, release: () => { clearTimeout(timer); release(); } };
+          return { entered, release: held.release };
+        },
+        async invalidateProof(caseId, evidenceId) {
+          const proof = await db.prepare('SELECT id FROM evidence WHERE id=? AND case_id=?').bind(evidenceId, caseId).first();
+          if (!proof) throw new Error('Proof does not belong to this local fixture.');
+          await db.batch([
+            db.prepare("UPDATE evidence SET tracking=tracking||'-changed',evidence_version=evidence_version+1 WHERE id=? AND case_id=?").bind(evidenceId, caseId),
+            db.prepare('UPDATE cases SET evidence_version=evidence_version+1 WHERE id=?').bind(caseId)
+          ]);
+        },
+        async inspect(caseId) {
+          return db.prepare(`SELECT
+            (SELECT count(*) FROM receipts WHERE case_id=c.id) AS receiptCount,
+            (SELECT count(*) FROM rules WHERE source_case_id=c.id) AS ruleCount,
+            (SELECT count(*) FROM events WHERE case_id=c.id AND type IN ('suggestion.accepted','suggestion.rejected')) AS transitionCount,
+            (SELECT count(*) FROM operations WHERE case_id=c.id AND kind='EVALUATION') AS evaluationCount,
+            p.active_rules_version AS activeRulesVersion
+            FROM cases c JOIN shop_policy p ON p.shop_id=c.shop_id WHERE c.id=?`).bind(caseId).first();
+        }
+      };
+      server = localIngress(target.origin, roles, request => handleApi(request, db, config, runner));
       const ready = once(server, 'listening');
       server.listen(Number(target.port), '127.0.0.1');
       await ready;
       runs.set(fixtureRunId, dispose);
-      return { fixtureRunId, executionMode: 'TEST', headers };
+      return { fixtureRunId, executionMode: 'TEST', headers, localD1 };
     } catch (error) {
       await dispose();
       throw error;

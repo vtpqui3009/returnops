@@ -3,6 +3,20 @@ import type { ExecutionMode } from '../../src/shared/contracts';
 
 export type Scenario = 'A' | 'B' | 'C' | 'D' | 'DE';
 export type Role = 'MEMBER' | 'OWNER';
+export interface LocalD1State {
+  receiptCount: number;
+  ruleCount: number;
+  transitionCount: number;
+  evaluationCount: number;
+  activeRulesVersion: number;
+}
+export interface LocalD1Controls {
+  /** Pause only the next injected TEST agent, after the backend captures its snapshot. */
+  holdNextEvaluation(): { entered: Promise<void>; release(): void };
+  /** Fixture-only change to proof tracking plus proof/aggregate evidence versions. */
+  invalidateProof(caseId: string, evidenceId: string): Promise<void>;
+  inspect(caseId: string): Promise<LocalD1State>;
+}
 export interface PreparedScenario {
   /** A non-secret identifier for the isolated synthetic fixture/reset run. */
   fixtureRunId: string;
@@ -10,6 +24,8 @@ export interface PreparedScenario {
   executionMode: ExecutionMode;
   /** Real session headers from trusted test setup; never fabricated identity headers. */
   headers: Record<Role, Record<string, string>>;
+  /** In-process controls available only on the disposable local D1 adapter. */
+  localD1?: LocalD1Controls;
 }
 export interface RuntimeAdapter {
   /** Reset only the designated synthetic test shop using Nhân's implementation. */

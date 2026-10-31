@@ -29,11 +29,19 @@ function pick(value: unknown, keys: string[]): Record<string, string | number | 
 }
 
 function safeAttachment(a: TestResult['attachments'][number]) {
-  if (!['fixture-run', 'terminal-case'].includes(a.name)) return;
+  if (!['fixture-run', 'terminal-case', 'consistency-check'].includes(a.name)) return;
   if (a.contentType !== 'application/json' || !a.body) throw new Error('Expected an in-memory JSON attachment.');
   const data: unknown = JSON.parse(a.body.toString('utf8'));
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Invalid QA evidence object.');
   if (a.name === 'fixture-run') return pick(data, ['fixtureRunId', 'scenario', 'executionMode']);
+  if (a.name === 'consistency-check') return pick(data, [
+    'variant', 'caseId', 'proofId', 'suggestionId', 'errorCode', 'initialEvidenceVersion',
+    'finalEvidenceVersion', 'initialProofVersion', 'finalProofVersion', 'reviewStatus',
+    'operationId', 'failedOperationStatus', 'caseStatus', 'acceptStatus', 'rejectStatus', 'suggestionStatus',
+    'suggestionVersion', 'ruleId', 'initialRulesVersion', 'replayStatus',
+    'terminalAcceptStatus', 'terminalRejectStatus', 'receiptCount', 'ruleCount',
+    'transitionCount', 'evaluationCount', 'activeRulesVersion', 'terminalAcceptCode', 'terminalRejectCode'
+  ]);
   const c = data as Record<string, unknown>;
   const op = c.operation as Record<string, unknown> | null;
   return {

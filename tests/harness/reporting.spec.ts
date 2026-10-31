@@ -20,13 +20,17 @@ test('TEST: preserve redacted evidence across runs and distinguish setup blocker
       status: 'passed', duration: 10, annotations: [], attachments: [{
         name: 'terminal-case', contentType: 'application/json',
         body: Buffer.from(JSON.stringify({ caseId: 'demo-a', operation: { id: 'op-A', error: { message: 'PRIVATE_MARKER' } }, headers: { Cookie: 'PRIVATE_MARKER' } }))
+      }, {
+        name: 'consistency-check', contentType: 'application/json',
+        body: Buffer.from(JSON.stringify({ variant: 'concurrent', ruleCount: 1, Cookie: 'PRIVATE_MARKER' }))
       }, { name: 'trace', contentType: 'application/zip', path: '/private/path' }]
     } as unknown as TestResult);
     await first.onEnd({ status: 'passed' } as FullResult);
     const summary = read(latest);
     const archived = join(results, 'runs', summary.runId, 'summary.json');
     const readEvidence = (file: string) => read(resolve(dirname(file), read(file).executions[0].evidence[0].path));
-    expect(summary.executions[0].evidence).toHaveLength(1);
+    expect(summary.executions[0].evidence).toHaveLength(2);
+    expect(read(resolve(dirname(latest), summary.executions[0].evidence[1].path))).toEqual({ variant: 'concurrent', ruleCount: 1 });
     expect(readEvidence(latest)).toEqual({ caseId: 'demo-a', operation: { id: 'op-A' }, receipt: null, flags: [] });
     expect(read(archived).matrix.find((row: { id: string }) => row.id === 'A-01').layers).toMatchObject({ api: 'PASS', e2e: 'NOT RUN' });
 

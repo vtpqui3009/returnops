@@ -18,6 +18,10 @@ export class ApiClient {
   }
 
   async call<T>(method: 'GET' | 'POST', path: string, expected: number, body?: unknown, key?: string): Promise<T> {
+    return (await this.request<T>(method, path, [expected], body, key)).body;
+  }
+
+  async request<T>(method: 'GET' | 'POST', path: string, expected: readonly number[], body?: unknown, key?: string): Promise<{ status: number; body: T }> {
     const url = new URL(path, this.origin);
     if (!path.startsWith('/api/') || !url.pathname.startsWith('/api/') || url.origin !== this.origin) throw new Error('API path must stay on the configured test origin.');
     let response: Response;
@@ -28,8 +32,8 @@ export class ApiClient {
         body: body === undefined ? undefined : JSON.stringify(body)
       });
     } catch { throw new Error(`Test request failed (${method} ${url.pathname}); no session headers were logged.`); }
-    if (response.status !== expected) throw new Error(`${method} ${url.pathname}: expected HTTP ${expected}, got ${response.status}.`);
-    try { return await response.json() as T; }
+    if (!expected.includes(response.status)) throw new Error(`${method} ${url.pathname}: expected HTTP ${expected.join('/')}, got ${response.status}.`);
+    try { return { status: response.status, body: await response.json() as T }; }
     catch { throw new Error(`${method} ${url.pathname}: response was not JSON.`); }
   }
 

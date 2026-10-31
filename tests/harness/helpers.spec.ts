@@ -73,6 +73,22 @@ test('TEST: HTTP status and JSON errors are actionable without logging bodies', 
   } finally { await s.close(); }
 });
 
+test('TEST: preserve status and body for competing requests and reject unexpected statuses', async () => {
+  const s = await server((req, res) => {
+    const status = req.url === '/api/winner' ? 200 : 409;
+    res.writeHead(status, { 'content-type': 'application/json' }).end(JSON.stringify({ result: status }));
+  });
+  try {
+    const api = new ApiClient(s.origin, {});
+    const results = await Promise.all([
+      api.request('POST', '/api/winner', [200, 409], {}),
+      api.request('POST', '/api/loser', [200, 409], {})
+    ]);
+    expect(results).toEqual([{ status: 200, body: { result: 200 } }, { status: 409, body: { result: 409 } }]);
+    await expect(api.request('POST', '/api/loser', [200], {})).rejects.toThrow('expected HTTP 200, got 409');
+  } finally { await s.close(); }
+});
+
 test('TEST: poll the requested operation rather than an older completed run', async () => {
   const values = [snapshot('old', 'COMPLETED'), snapshot('new', 'PENDING'), snapshot('new', 'RUNNING'), snapshot('new', 'COMPLETED')];
   let calls = 0;
