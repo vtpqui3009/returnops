@@ -108,6 +108,7 @@ Suggestion status is `PENDING | ACCEPTED | REJECTED`; ACTIVE refers to the accep
 
 ## Remaining execution decisions
 
+- Use the [deferred AUTH-N03 and DATA-N01 checklist](deferred-auth-reset-verification.md) when the deployed environment and supported reset procedure are available. Current partial results retain their existing evidence scope.
 - Confirm team adoption of baseline SHA, trusted hosted identity/role mapping, demo policy, exact model ID and real tool-call probe.
 - Repeat the local suite when backend or UI sources change. Verify Vinext route wiring and real Sites sessions separately from the component/API browser layer.
 - Clarify error codes for C's missing-proof decision, wrong proof source/type, and same-shop case/evidence mismatch; exact rejection stage for invalid proof submission; invalid Origin/key responses; body/field/page-size limits and pagination order.

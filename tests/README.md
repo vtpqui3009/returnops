@@ -44,6 +44,8 @@ The suite uses a TEST runner for normal flows. Agent-fault cases exercise the ba
 
 ## Connect the real API
 
+For the remaining identity and reset clauses after deployment, use the [AUTH-N03 and DATA-N01 execution checklist](../docs/deferred-auth-reset-verification.md). It records environment handoff, required negative and positive controls, reset sentinels and evidence needed to complete the partial cases.
+
 For local integration, use the checked-in [PR #8 adapter](adapters/README.md) with an isolated backend checkout. It loads the backend's actual dispatcher, SQL migration and seed factory, binds a loopback HTTP listener and injects a TEST provider. The QA client receives synthetic session cookies. No OpenAI credentials are required. Start with A-01, then run the API project.
 
 For example, in PowerShell:
