@@ -11,5 +11,6 @@ declare namespace Cloudflare {
     OWNER_USER_IDS?: string;
     MEMBER_USER_IDS?: string;
     RETURNOPS_INITIALIZE_SECRET?: string;
+    RETURNOPS_SIGNED_IN_DEMO?: string;
   }
 }

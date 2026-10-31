@@ -16,6 +16,20 @@ test('identity ingress and explicit allowlists fail closed', () => {
   fault(() => actor(request({ 'oai-authenticated-user-id': 'forged', 'oai-authenticated-user-email': 'x@example.test' }), config));
 });
 
+test('signed-in demo grants all verified visitors owner operations without an allowlist', () => {
+  const demo = { SITES_IDENTITY_VERIFIED: 'true', RETURNOPS_SIGNED_IN_DEMO: 'true' };
+  const visitor = request({ 'oai-authenticated-user-id': 'new-judge', 'oai-authenticated-user-email': 'judge@example.test' });
+  assert.deepEqual(actor(visitor, demo), { id: 'new-judge', role: 'OWNER', shopId: 'demo-shop' });
+  fault(() => actor(request(), demo));
+  fault(() => actor(request({ 'oai-authenticated-user-id': 'new-judge' }), demo));
+  fault(() => actor(request({ 'oai-authenticated-user-email': 'judge@example.test' }), demo));
+  fault(() => actor(visitor, { ...demo, SITES_IDENTITY_VERIFIED: 'false' }));
+  fault(() => actor(visitor, { ...demo, RETURNOPS_SIGNED_IN_DEMO: 'false' }));
+  fault(() => actor(visitor, { SITES_IDENTITY_VERIFIED: 'true' }));
+  assert.equal(actor(request({ 'oai-authenticated-user-id': 'member', 'oai-authenticated-user-email': 'm@example.test' }), { ...config, RETURNOPS_SIGNED_IN_DEMO: 'true' }).role, 'OWNER');
+  assert.equal(actor(request({ 'oai-authenticated-user-id': 'member', 'oai-authenticated-user-email': 'm@example.test' }), config).role, 'MEMBER');
+});
+
 test('mutation guard requires same-origin, valid idempotency, canonical payload, and strict JSON schema', async () => {
   const valid = request({ origin: 'https://returnops.local', 'Idempotency-Key': 'intake-1', 'content-type': 'application/json' }, '{"orderId":"demo-a"}');
   requireOrigin(valid); assert.equal(idempotency(valid), 'intake-1');

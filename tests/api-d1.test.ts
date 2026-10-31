@@ -57,6 +57,24 @@ test('API denies anonymous and member owner actions before D1 mutation', async (
   assert.equal(unchanged.evidence[0].reviewStatus, 'SUBMITTED');
 });
 
+test('signed-in shared demo allows an unlisted judge to perform an owner action', async (t) => {
+  const { runtime, db } = await demo(); t.after(() => runtime.dispose());
+  const shared = { ...config, OWNER_USER_IDS: '', MEMBER_USER_IDS: '', RETURNOPS_SIGNED_IN_DEMO: 'true' };
+  assert.equal((await handleApi(new Request('https://returnops.local/api/cases'), db, shared, runner)).status, 401);
+  const intake = await handleApi(request('/api/cases', {orderId:'demo-c', claim:'Shared demo delivery dispute'}, 'judge-intake', 'new-judge'), db, shared, runner);
+  assert.equal(intake.status, 201);
+  const {caseId} = await intake.json() as {caseId:string};
+  const detail = await (await handleApi(get(`/api/cases/${caseId}`, 'new-judge'), db, shared, runner)).json() as {caseVersion:number;evidence:{id:string;evidenceVersion:number}[]};
+  const reviewed = await handleApi(request(`/api/cases/${caseId}/evidence/${detail.evidence[0].id}/review`, {
+    expectedCaseVersion:detail.caseVersion, expectedEvidenceVersion:detail.evidence[0].evidenceVersion,
+    reviewStatus:'VERIFIED', reason:'Signed-in judge checked synthetic metadata',
+  }, 'judge-review', 'new-judge'), db, shared, runner);
+  assert.equal(reviewed.status, 200);
+  const saved = await db.prepare('SELECT review_status,verified_by FROM evidence WHERE id=?').bind(detail.evidence[0].id).first<{review_status:string;verified_by:string}>();
+  assert.equal(saved?.review_status, 'VERIFIED');
+  assert.equal(saved?.verified_by, 'new-judge');
+});
+
 test('wrong proof context and over-cap owner completion leave state and receipts unchanged', async (t) => {
   const { runtime, db } = await demo(); t.after(() => runtime.dispose());
   const intake = await handleApi(request('/api/cases', { orderId: 'demo-c', claim: 'Conflict' }, 'guard-c'), db, config, runner);
