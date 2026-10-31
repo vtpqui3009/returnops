@@ -42,7 +42,7 @@ All mutations require same-origin `Origin`, a documented JSON body and an `Idemp
 | `GET /api/cases/:id` | Case ID → 200 `CaseDetail` | All A–E flows; poll `evaluation.status/result/error`, not just HTTP success |
 | `POST /api/cases` | `IntakeRequest` → 201 `IntakeAcknowledgement` | A-01, B-01, R-N01/R-N04 |
 | `POST /api/cases/:id/evaluate` | `EvaluateRequest` with expected case/catalog versions → 202 `EvaluateAcknowledgement` | E-01/E-02, R-N06 |
-| `POST /api/cases/:id/evidence` | `SubmitEvidenceRequest` → 201 `EvidenceAcknowledgement` | B-02; metadata/reference only, starts SUBMITTED |
+| `POST /api/cases/:id/evidence` | `SubmitEvidenceRequest` → 201 `EvidenceAcknowledgement` | B-02, SEC-N01; metadata/reference only, starts SUBMITTED |
 | `POST /api/cases/:id/evidence/:eid/review` | `ReviewEvidenceRequest` with expected case/evidence versions → 200 `ReviewAcknowledgement` | B-03, C-01, B-N01/B-N03/B-N06 |
 | `POST /api/cases/:id/owner-decision` | `OwnerDecisionRequest` with expected case/catalog versions → 200 `OwnerDecisionResponse` | C-01, D-01, C-N02, AGENT-N03 |
 | `GET /api/rule-suggestions?status=` | Bounded filter → 200 `RuleSuggestionQueueResponse` | D-01, E-01/E-02 |
@@ -104,6 +104,7 @@ Suggestion status is `PENDING | ACCEPTED | REJECTED`; ACTIVE refers to the accep
 | R-N06 | Issue a fresh-key evaluate while an unexpired evaluation is active; later retry after terminal failure. | Competing evaluation returns 409 CASE_BUSY; same-key replay still returns its original acknowledgement. After terminal failure, a new key/fresh versions can start another operation without a duplicate receipt. Lease/expiry behavior awaits backend design. | API + D1 | NOT RUN |
 | AGENT-N03 | After AGENT-N01, owner separately recovers an eligible case using a permitted decision. | 200 owner response has MANUAL + SIMULATED receipt and agentRunId null; failed run is not relabeled LIVE-success and no technical-exception learning is created. Monetary guardrails still apply. | API + UI + D1 | NOT RUN |
 | UI-N03 | Open each screen with loading, empty, API error or paginated queue results. | UI handles each state, uses bounded queue filters/cursor and nextCursor without duplicating/omitting records under the agreed pagination semantics; refresh reloads server state. Pagination bounds/order remain to be specified. | API + integrated UI | NOT RUN |
+| SEC-N01 | Submit proof references containing HTML-like marker text and a controlled test URL; read and render accepted references in case detail/review, then refresh. | Reference remains plain text: no injected DOM, script/event execution, embedded content or automatic preview. Neither server nor browser fetches the reference URL. Submission does not mark proof VERIFIED or resume the case. Use controlled test endpoints and capture browser network plus server-side request evidence; a clean UI alone does not prove no server fetch occurred. | API + UI + network observation | NOT RUN |
 
 ## Remaining execution decisions
 
@@ -117,6 +118,8 @@ Suggestion status is `PENDING | ACCEPTED | REJECTED`; ACTIVE refers to the accep
 Record one row per ID and environment; do not combine mock results with real execution.
 
 For asynchronous cases, retain the initial HTTP acknowledgement and operation ID plus the terminal GET detail snapshot. Capture requestId, request key (non-secret test value), actor role, expected/observed versions, receipt ID, flags and rule provenance as applicable. Record executionMode and completionMode separately. Static comparison with the baseline is not a PASS for any runtime case.
+
+For SEC-N01, also retain the reference markers, rendered text/DOM evidence, browser network trace and controlled endpoint/server request log covering submission, review display and refresh. Keep injected markers and URLs confined to the test environment.
 
 | ID | Level / environment | Commit SHA | Result | Evidence (log, redacted response, screenshot/video, event/DB) | Blocker / notes |
 | --- | --- | --- | --- | --- | --- |
