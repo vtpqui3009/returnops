@@ -1,10 +1,10 @@
-import type { Locator, Page } from '@playwright/test';
+import type { Locator, Page, TestInfo } from '@playwright/test';
 import { test, expect } from '../support/fixtures';
 import { waitForEvaluation } from '../support/api';
 
 test.afterEach(async ({ page }) => { await page.close(); });
 
-async function checkReadRecovery(page: Page, endpoint: string, navigation: Locator, recoveredContent: Locator) {
+async function checkReadRecovery(page: Page, endpoint: string, navigation: Locator, recoveredContent: Locator, info: TestInfo, screen: string) {
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
   await page.route(endpoint, async route => {
@@ -14,6 +14,7 @@ async function checkReadRecovery(page: Page, endpoint: string, navigation: Locat
     } } });
   }, { times: 1 });
 
+  const failedRead = page.waitForResponse(endpoint);
   try {
     const request = page.waitForRequest(endpoint);
     await navigation.click();
@@ -23,17 +24,23 @@ async function checkReadRecovery(page: Page, endpoint: string, navigation: Locat
 
   const alert = page.getByRole('alert');
   await expect(alert).toContainText('Chưa hoàn tất thao tác');
+  const errorStatus = (await failedRead).status();
+  expect(errorStatus).toBe(503);
   const retry = page.waitForResponse(endpoint);
   await alert.getByRole('button', { name: 'Tải lại thông tin', exact: true }).click();
-  expect((await retry).status()).toBe(200);
+  const recoveryStatus = (await retry).status();
+  expect(recoveryStatus).toBe(200);
   await expect(recoveredContent).toBeVisible();
   await expect(alert).toHaveCount(0);
+  await info.attach('ui-observation', { contentType: 'application/json', body: JSON.stringify({
+    screen, loadingObserved: true, errorStatus, recoveryStatus, recovered: true
+  }) });
 }
 
 for (const screen of ['Learning', 'Case detail', 'Owner review'] as const) {
   test(`UI-N03: ${screen} handles loading, failed read and recovery`,
-    { annotation: { type: 'matrix-id', description: 'UI-N03' } },
-    async ({ page, runtime }) => {
+    { annotation: [{ type: 'matrix-id', description: 'UI-N03' }, { type: 'matrix-variant', description: screen.toLowerCase().replaceAll(' ', '-') }] },
+    async ({ page, runtime }, info) => {
       const origin = runtime.owner.origin;
       const cookie = runtime.headers.OWNER.Cookie;
       const separator = cookie.indexOf('=');
@@ -47,7 +54,7 @@ for (const screen of ['Learning', 'Case detail', 'Owner review'] as const) {
         await expect(page.getByRole('heading', { name: 'Chưa có yêu cầu phù hợp' })).toBeVisible();
         await checkReadRecovery(page, `${origin}/api/rule-suggestions`,
           page.getByRole('button', { name: 'Quy tắc của shop', exact: true }),
-          page.getByRole('heading', { name: 'Chưa có gợi ý quy tắc mới', exact: true }));
+          page.getByRole('heading', { name: 'Chưa có gợi ý quy tắc mới', exact: true }), info, 'learning');
         return;
       }
 
@@ -55,12 +62,12 @@ for (const screen of ['Learning', 'Case detail', 'Owner review'] as const) {
       await expect(openCase).toBeVisible();
       const endpoint = `${origin}/api/cases/${detail.caseId}`;
       if (screen === 'Case detail') {
-        await checkReadRecovery(page, endpoint, openCase, page.getByRole('heading', { name: claim, exact: true }));
+        await checkReadRecovery(page, endpoint, openCase, page.getByRole('heading', { name: claim, exact: true }), info, 'case-detail');
       } else {
         await openCase.click();
         await expect(page.getByRole('heading', { name: claim, exact: true })).toBeVisible();
         await checkReadRecovery(page, endpoint, page.getByRole('button', { name: 'Chủ shop xem xét', exact: true }),
-          page.getByLabel('Hướng xử lý do bạn chọn', { exact: true }));
+          page.getByLabel('Hướng xử lý do bạn chọn', { exact: true }), info, 'owner-review');
       }
     });
 }

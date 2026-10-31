@@ -32,8 +32,8 @@ async function record(info: TestInfo, phase: string, c: CaseDetail, counts: Reco
   }) });
 }
 
-test('DATA-N01: reload persisted receipt, reset the queue and process a fresh intake', {
-  annotation: { type: 'matrix-id', description: 'DATA-N01' }
+test('DATA-N01 local portion: persist a receipt and reset only the disposable fixture', {
+  annotation: { type: 'related-matrix-id', description: 'DATA-N01' }
 }, async ({ page, runtime }, info) => {
   const { member, localD1 } = runtime;
   test.skip(!localD1, 'Requires disposable D1 with persistence and reset controls.');

@@ -8,16 +8,22 @@ import { fileURLToPath } from 'node:url';
 // and deployment still require their own verification.
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const output = join(root, 'tests', 'artifacts', 'ui-bundle');
-const source = join(output, 'source');
 const ref = process.env.RETURNOPS_UI_REF ?? 'origin/feat/qui-ui';
 const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 const commit = git(['rev-parse', '--verify', ref]).trim();
+const source = join(output, 'source', commit);
 await mkdir(source, { recursive: true });
-for (const name of ['api.ts', 'returnops-app.tsx', 'returnops.css', 'test-adapter.ts']) {
-  await writeFile(join(source, name), git(['show', `${commit}:src/features/returnops/${name}`]));
+const prefix = 'src/features/returnops/';
+const files = git(['ls-tree', '-r', '--name-only', commit, '--', prefix]).trim().split('\n')
+  .filter(file => /\.(?:[cm]?[jt]sx?|css)$/.test(file));
+if (!files.includes(prefix + 'returnops-app.tsx')) throw new Error('The selected UI revision has no ReturnOps component.');
+for (const file of files) {
+  const destination = join(source, file.slice(prefix.length));
+  await mkdir(dirname(destination), { recursive: true });
+  await writeFile(destination, git(['show', `${commit}:${file}`]));
 }
 await writeFile(join(output, 'entry.tsx'), `import { createRoot } from 'react-dom/client';
-import App from './source/returnops-app';
+import App from './source/${commit}/returnops-app';
 createRoot(document.getElementById('root')!).render(<App testMode={false} />);
 `);
 const backend = process.env.RETURNOPS_BACKEND_ROOT;

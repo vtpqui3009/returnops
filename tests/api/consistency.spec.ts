@@ -24,7 +24,7 @@ for (const variant of ['change-before-review', 'change-during-evaluation'] as co
   test.describe(`B-N05 ${variant}`, () => {
     test.use({ scenario: 'B' });
     test('changed proof cannot authorize completion from an old snapshot', {
-      annotation: { type: 'matrix-id', description: 'B-N05' }
+      annotation: [{ type: 'matrix-id', description: 'B-N05' }, { type: 'matrix-variant', description: variant }]
     }, async ({ runtime: { member, owner, localD1 } }, info) => {
       requireLocalD1(localD1, info);
       const intake = await member.intake('demo-b', 'Synthetic evidence consistency check');
@@ -139,7 +139,7 @@ for (const variant of ['concurrent', 'accept-first', 'reject-first'] as const) {
   test.describe(`R-N05 ${variant}`, () => {
     test.use({ scenario: 'D' });
     test('accept and reject leave one durable terminal transition', {
-      annotation: { type: 'matrix-id', description: 'R-N05' }
+      annotation: [{ type: 'matrix-id', description: 'R-N05' }, { type: 'matrix-variant', description: variant }]
     }, async ({ runtime: { member, owner, localD1 } }, info) => {
       requireLocalD1(localD1, info);
       const intake = await member.intake('demo-d', 'Synthetic suggestion consistency check');

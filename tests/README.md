@@ -34,11 +34,11 @@ Install application dependencies in the QA checkout and backend checkout using t
 Use the local adapter variables below, then run:
 
 ```powershell
-$env:RETURNOPS_UI_REF = '9ccf3bee940648594daad353a267dc297e75f68d'
+$env:RETURNOPS_UI_REF = '1e115276aaf0a7a0a5611cd2564b6ded17f11dd0'
 npm --prefix tests run test:all-local
 ```
 
-This runs harness, API and `ui-local` checks, and records unavailable hosted/full-route checks as NOT RUN. `test:ui-local` runs the browser layer alone. The UI build helper reads the four existing UI source files at the specified Git revision into ignored artifacts. It mounts the real component with `testMode={false}` and serves it beside the backend dispatcher. Its result applies to that component/API integration. Record the UI commit and backend commit separately from the QA commit.
+This runs harness, API and `ui-local` checks, and records unavailable full requirements as NOT RUN. `test:ui-local` runs the browser layer alone. The UI build helper reads the feature source files and local module dependencies at the specified Git revision into a separate ignored directory per commit. It mounts the real component with `testMode={false}` and serves it beside the backend dispatcher. Its result applies to that component/API integration. Record the UI commit and backend commit separately from the QA commit.
 
 The suite uses a TEST runner for normal flows. Agent-fault cases exercise the backend's real `runAgent` validator with an offline Responses transport. Failed evaluations can retain the backend's default `LIVE` failure label before the injected runner returns. Those values do not establish contact with a real provider.
 
