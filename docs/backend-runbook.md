@@ -36,7 +36,7 @@ Set `SITES_IDENTITY_VERIFIED=true` only after confirming Sites protected ingress
 
 `npm run probe:openai` performs an explicit two-round Responses function-calling probe with `gpt-5.6-terra`. It prints only status, model, tool count, rounds, and a provider response ID; it never prints the API key or raw response.
 
-The opt-in `scripts/smoke-live.ts` path uses synthetic local D1 data and a private harness identity to exercise A through the real provider. It records simulated receipt, idempotent replay, and restart persistence. It is not a hosted identity or deployment check.
+The opt-in `scripts/smoke-live.ts` path uses synthetic local D1 data and a private harness identity to exercise A–E through the real provider. It checks proof resume, separate rule acceptance and fresh E provenance, C flags/no learning, one simulated receipt per case, A replay, and restart persistence. It is not a hosted identity or deployment check.
 
 Run the provider checks explicitly; they read a configured key from process environment or the local `.env` file:
 
