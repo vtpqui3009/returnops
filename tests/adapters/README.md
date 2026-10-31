@@ -17,9 +17,13 @@ $env:RETURNOPS_TEST_EXECUTION_MODE = 'TEST'
 npm --prefix tests run test:api -- --grep A-01
 ```
 
-Run `npm --prefix tests run test:api` for all 16 API entries covering 12 matrix IDs plus the identity probe. Use an unused port above 1023. `RETURNOPS_BACKEND_ROOT` must be absolute. The adapter starts its own server in TEST mode.
+Run `npm --prefix tests run test:api` for all API entries. Use an unused port above 1023. `RETURNOPS_BACKEND_ROOT` must be absolute. The adapter starts its own server with synthetic identity and an injected agent.
 
 Run `npm --prefix tests run test:api -- consistency.spec.ts` for B-N05 and R-N05 only. Their five variants cover proof changes before review and during evaluation, concurrent accept/reject, and both ordered terminal outcomes. The adapter exposes optional `localD1` controls in process. These pause the next TEST agent, change proof tracking and proof/aggregate evidence versions in the disposable fixture, and read selected SQL counts. The proof change keeps case/order/catalog versions fixed to isolate evidence snapshot fencing. Cleanup releases a held agent before draining HTTP requests. These controls are confined to the test adapter and its nonpersistent database.
+
+Additional controls patch designated fixture facts, seed a foreign-shop resource, reject receipt insertion within a real D1 transaction, lose a response after commit, reopen the same persisted local D1 store, perform canonical reset/seed and disable trusted identity. Each fixture gets a unique temporary persistence directory that cleanup removes. Browser cleanup drains active handlers and closes keepalive sockets before disposing D1.
+
+The `ui-local` project bundles the existing UI component at `RETURNOPS_UI_REF`, serves it in API mode and uses opaque synthetic role cookies. It records the UI SHA separately. A pending-acknowledgement test delivers a genuine immutable review acknowledgement from D1 before releasing its held evaluation, then checks browser polling and completion. This bridge exercises the acknowledgement timing boundary while preserving the backend's actual acknowledgement body. Browser fault cases label injected errors and lost responses explicitly.
 
 ## Adapter for the deployed service
 

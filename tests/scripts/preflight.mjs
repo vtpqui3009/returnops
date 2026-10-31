@@ -15,8 +15,8 @@ if (process.env.RETURNOPS_TEST_ALLOW_MUTATIONS !== '1') blockers.push('Set RETUR
 if (!['LIVE', 'TEST', 'REPLAY'].includes(process.env.RETURNOPS_TEST_EXECUTION_MODE ?? 'TEST')) blockers.push('RETURNOPS_TEST_EXECUTION_MODE must be TEST, REPLAY or LIVE.');
 const adapter = process.env.RETURNOPS_TEST_ADAPTER;
 if (!adapter || !existsSync(resolve(adapter))) blockers.push('Set RETURNOPS_TEST_ADAPTER to the real seed/reset/identity adapter module; see adapters/README.md.');
-if (layer === 'e2e') blockers.push('UI selectors and scenario drivers are not implemented yet; e2e cases are explicitly planned/NOT RUN.');
-if (!['api', 'e2e'].includes(layer)) blockers.push('Expected api or e2e.');
+if (layer === 'e2e') blockers.push('A Vinext/Sites route driver and designated deployment are not configured. Use ui-local for the separate browser component/API checks.');
+if (!['api', 'e2e', 'ui-local'].includes(layer)) blockers.push('Expected api, ui-local or e2e.');
 if (blockers.length) {
   console.error(`NOT RUN (${layer}):\n- ${blockers.join('\n- ')}`);
   process.exitCode = 2;

@@ -9,6 +9,6 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["playwright.config.ts", "api/**/*.ts", "e2e/**/*.ts", "harness/**/*.ts", "inventory/**/*.ts", "support/**/*.ts", "../src/shared/contracts.ts"],
+  "include": ["playwright.config.ts", "api/**/*.ts", "ui-local/**/*.ts", "e2e/**/*.ts", "harness/**/*.ts", "inventory/**/*.ts", "support/**/*.ts", "../src/shared/contracts.ts"],
   "exclude": ["node_modules", "artifacts"]
 }

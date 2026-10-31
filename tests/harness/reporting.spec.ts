@@ -49,6 +49,14 @@ test('TEST: preserve redacted evidence across runs and distinguish setup blocker
     discovery.onBegin({ ...config, argv: ['--list'] }, suite);
     await discovery.onEnd({ status: 'passed' } as FullResult);
     expect(read(latest).runId).toBe(latestRunId);
+    const partial = new MatrixReporter();
+    partial.onBegin(config, suite);
+    partial.onTestEnd({ ...testCase, annotations: [{ type: 'related-matrix-id', description: 'AUTH-N03' }] } as TestCase, {
+      status: 'passed', duration: 1, annotations: [], attachments: []
+    } as unknown as TestResult);
+    await partial.onEnd({ status: 'passed' } as FullResult);
+    expect(read(latest).executions[0]).toMatchObject({ id: null, relatedMatrixIds: ['AUTH-N03'], result: 'PASS' });
+    expect(read(latest).matrix.find((row: { id: string }) => row.id === 'AUTH-N03').layers.api).toBe('NOT RUN');
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

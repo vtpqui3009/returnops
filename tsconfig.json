@@ -42,6 +42,7 @@
   ],
   "exclude": [
     "tests/api",
+    "tests/ui-local",
     "tests/e2e",
     "tests/harness",
     "tests/inventory",

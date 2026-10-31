@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ApiClient, validateOrigin } from './api';
 import type { PreparedScenario, RuntimeAdapter, Scenario } from './types';
+import type { CaseQueueResponse } from '../../src/shared/contracts';
 
 export const test = base.extend<{
   scenario: Scenario;
@@ -26,14 +27,27 @@ export const test = base.extend<{
       const module = await import(pathToFileURL(resolve(adapterPath)).href);
       adapter = module.default as RuntimeAdapter;
       if (typeof adapter?.prepare !== 'function') throw new Error('Invalid adapter');
-      prepared = await adapter.prepare({ scenario, baseURL });
+      prepared = await adapter.prepare({ scenario, baseURL, uiBundleRoot: testInfo.project.name === 'ui-local' ? resolve('artifacts/ui-bundle') : undefined });
     } catch { blocked('Runtime adapter setup failed; inspect the adapter locally without publishing session values.'); }
     const allowRemote = process.env.RETURNOPS_TEST_ALLOW_REMOTE === '1';
     try {
       if (!prepared?.fixtureRunId || !prepared.headers?.MEMBER || !prepared.headers?.OWNER) blocked('Adapter must return fixtureRunId and both role sessions.');
       if (prepared.executionMode !== (process.env.RETURNOPS_TEST_EXECUTION_MODE ?? 'TEST')) blocked('Server execution mode differs from the requested mode.');
       await testInfo.attach('fixture-run', { body: JSON.stringify({ fixtureRunId: prepared.fixtureRunId, scenario, executionMode: prepared.executionMode }), contentType: 'application/json' });
-      await provide({ ...prepared, member: new ApiClient(baseURL, prepared.headers.MEMBER, allowRemote), owner: new ApiClient(baseURL, prepared.headers.OWNER, allowRemote) });
+      const member = new ApiClient(baseURL, prepared.headers.MEMBER, allowRemote);
+      const owner = new ApiClient(baseURL, prepared.headers.OWNER, allowRemote);
+      await provide({ ...prepared, member, owner });
+      if (prepared.localD1 && testInfo.status === 'passed') {
+        const queue = await owner.call<CaseQueueResponse>('GET', '/api/cases?limit=50', 200);
+        for (const item of queue.items) {
+          const c = await owner.detail(item.id);
+          await testInfo.attach('terminal-case', { contentType: 'application/json', body: JSON.stringify({
+            caseId: c.id, caseVersion: c.caseVersion, evidenceVersion: c.evidenceVersion,
+            activeRulesVersion: c.activeRulesVersion, status: c.status, decision: c.decision,
+            operation: c.evaluation, receipt: c.receipt, flags: c.flags
+          }) });
+        }
+      }
     } finally {
       if (prepared?.fixtureRunId) await adapter.cleanup?.({ fixtureRunId: prepared.fixtureRunId, baseURL });
     }

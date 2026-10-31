@@ -1,4 +1,4 @@
-# ReturnOps test skeleton
+# ReturnOps QA harness
 
 This branch builds on the test matrix in PR #7 and baseline `9243091`. It provides an isolated Playwright package for issue #3. The application package/lockfile, backend schema and policy are unchanged. Root `tsconfig.json` excludes this separate test package so an application-only installation does not require QA dependencies.
 
@@ -20,12 +20,27 @@ The default `test` command runs **harness self-tests only**, using controlled lo
 | Layer | Status |
 | --- | --- |
 | Harness | Self-tests cover HTTP helpers, operation polling, catalog linkage and evidence reporting. |
-| API | Eight A–E flows, AUTH-N01, R-N03, B-N05 and R-N05 are executable against the merged backend dispatcher. B-N05 has two variants and R-N05 has three. A separate anonymous/MEMBER probe exercises local denials only. |
-| Remaining matrix cases | Thirty-one planned matrix entries remain in the inventory. |
-| Browser E2E | Twelve planned entries: A–E main flows, UI-N01/02/03 and SEC-N01. No UI driver/selectors are implemented; the E2E command is blocked accordingly. |
+| API | Main flows and negative cases exercise proof, policy boundaries, authorization, idempotency, races, transactional faults and the real agent validator with offline provider transport. Related-only probes retain their partial scope. |
+| Local browser | The existing UI component from an identified UI commit runs in API mode against the local dispatcher/D1. Checks include A–E, retry, conflict, read states, pagination, persistence/reset and proof references. |
+| Hosted / full app | Vinext/Sites route integration, hosted identity, hosted D1 migrations, deployment and judge access require separate environments and evidence. |
 | D1/deployment | The bundled local adapter creates a fresh Miniflare D1 instance per case. Hosted D1, Sites ingress, deployment and judge access require separate verification. |
 
 Use `test:list` to inspect discovery by project. Matrix IDs come from `docs/test-matrix.md`. Runner entries include harness checks and planned UI work, so use the per-layer report for acceptance counts.
+
+## Run the complete local suite
+
+Install application dependencies in the QA checkout and backend checkout using their existing `npm run install:ci` command. The local UI bundle uses React, React DOM and lucide-react from the QA checkout, and esbuild from the backend dependency tree. Install Chromium with `npm --prefix tests exec -- playwright install chromium`.
+
+Use the local adapter variables below, then run:
+
+```powershell
+$env:RETURNOPS_UI_REF = '9ccf3bee940648594daad353a267dc297e75f68d'
+npm --prefix tests run test:all-local
+```
+
+This runs harness, API and `ui-local` checks, and records unavailable hosted/full-route checks as NOT RUN. `test:ui-local` runs the browser layer alone. The UI build helper reads the four existing UI source files at the specified Git revision into ignored artifacts. It mounts the real component with `testMode={false}` and serves it beside the backend dispatcher. Its result applies to that component/API integration. Record the UI commit and backend commit separately from the QA commit.
+
+The suite uses a TEST runner for normal flows. Agent-fault cases exercise the backend's real `runAgent` validator with an offline Responses transport. Failed evaluations can retain the backend's default `LIVE` failure label before the injected runner returns. Those values do not establish contact with a real provider.
 
 ## Connect the real API
 

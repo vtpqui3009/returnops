@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import type { ExecutionMode } from '../../src/shared/contracts';
+import type { ExecutionMode, ReviewAcknowledgement } from '../../src/shared/contracts';
 
 export type Scenario = 'A' | 'B' | 'C' | 'D' | 'DE';
 export type Role = 'MEMBER' | 'OWNER';
@@ -11,6 +11,21 @@ export interface LocalD1State {
   activeRulesVersion: number;
 }
 export interface LocalD1Controls {
+  patchOrder(orderId: string, changes: Partial<{
+    amountVnd: number; deliveredAt: number | null; orderVersion: number; tracking: string;
+    reasonGroup: string; itemCondition: string; riskFlags: string[];
+  }>): Promise<void>;
+  patchEvidence(caseId: string, evidenceId: string, changes: Partial<{
+    tracking: string; orderVersion: number; reviewStatus: 'SUBMITTED' | 'VERIFIED' | 'REJECTED';
+  }>): Promise<void>;
+  seedForeignCase(): Promise<string>;
+  configureAgent(mode: 'ok' | 'missing-key' | 'provider-error' | 'timeout' | 'tool-budget' | 'round-budget' | 'refusal' | 'invalid-args' | 'unauthorized-tool'): void;
+  failNextReceiptInsert(): Promise<() => Promise<void>>;
+  dropNextCommittedResponse(): void;
+  restartStore(): Promise<void>;
+  resetStore(): Promise<void>;
+  setIdentityTrust(enabled: boolean): void;
+  readReviewAcknowledgement(key: string): Promise<ReviewAcknowledgement>;
   /** Pause only the next injected TEST agent, after the backend captures its snapshot. */
   holdNextEvaluation(): { entered: Promise<void>; release(): void };
   /** Fixture-only change to proof tracking plus proof/aggregate evidence versions. */
@@ -29,7 +44,7 @@ export interface PreparedScenario {
 }
 export interface RuntimeAdapter {
   /** Reset only the designated synthetic test shop using Nhân's implementation. */
-  prepare(input: { scenario: Scenario; baseURL: string }): Promise<PreparedScenario>;
+  prepare(input: { scenario: Scenario; baseURL: string; uiBundleRoot?: string }): Promise<PreparedScenario>;
   cleanup?(input: { fixtureRunId: string; baseURL: string }): Promise<void>;
 }
 /** Reserved for the UI lane once routes/selectors exist. No mock implementation. */

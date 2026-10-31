@@ -1,7 +1,7 @@
 import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestResult } from '@playwright/test/reporter';
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, renameSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { readCatalog } from './catalog';
 
@@ -13,6 +13,7 @@ type Observation = {
   result: Status;
   durationMs: number;
   blocker?: string;
+  relatedMatrixIds: string[];
   evidence: { name: string; path: string }[];
 };
 
@@ -29,11 +30,15 @@ function pick(value: unknown, keys: string[]): Record<string, string | number | 
 }
 
 function safeAttachment(a: TestResult['attachments'][number]) {
-  if (!['fixture-run', 'terminal-case', 'consistency-check'].includes(a.name)) return;
+  if (!['fixture-run', 'terminal-case', 'consistency-check', 'storage-retry-probe', 'proof-reference-probe', 'ui-observation', 'policy-agent-probe'].includes(a.name)) return;
   if (a.contentType !== 'application/json' || !a.body) throw new Error('Expected an in-memory JSON attachment.');
   const data: unknown = JSON.parse(a.body.toString('utf8'));
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Invalid QA evidence object.');
   if (a.name === 'fixture-run') return pick(data, ['fixtureRunId', 'scenario', 'executionMode']);
+  if (a.name === 'storage-retry-probe') return pick(data, ['phase', 'caseId', 'caseVersion', 'receiptId', 'receiptCount', 'ruleCount', 'transitionCount', 'evaluationCount', 'activeRulesVersion', 'auditEventCount', 'evidenceCount', 'requestStatus', 'errorCode', 'suggestionCount', 'queueSize']);
+  if (a.name === 'proof-reference-probe') return pick(data, ['controlRequests', 'referenceRequests', 'submittedReferences', 'observationScope']);
+  if (a.name === 'ui-observation') return pick(data, ['caseId', 'caseStatus', 'receiptId', 'sourceCaseId', 'receiptCount', 'ruleCount', 'transitionCount', 'evaluationCount', 'activeRulesVersion']);
+  if (a.name === 'policy-agent-probe') return pick(data, ['phase', 'caseId', 'caseVersion', 'evidenceVersion', 'activeRulesVersion', 'status', 'decision', 'operationId', 'operationStatus', 'errorCode', 'receiptCount', 'ruleCount', 'transitionCount', 'evaluationCount']);
   if (a.name === 'consistency-check') return pick(data, [
     'variant', 'caseId', 'proofId', 'suggestionId', 'errorCode', 'initialEvidenceVersion',
     'finalEvidenceVersion', 'initialProofVersion', 'finalProofVersion', 'reviewStatus',
@@ -74,7 +79,7 @@ export default class MatrixReporter implements Reporter {
     this.projects = suite.suites.map(s => s.title);
     const backend = process.env.RETURNOPS_BACKEND_ROOT;
     const adapter = process.env.RETURNOPS_TEST_ADAPTER;
-    if (this.projects.includes('api') && backend && adapter && resolve(adapter) === join(config.rootDir, 'adapters', 'pr8-local.mjs')) {
+    if (this.projects.some(p => ['api', 'ui-local'].includes(p)) && backend && adapter && resolve(adapter) === join(config.rootDir, 'adapters', 'pr8-local.mjs')) {
       this.metadata.runtimeScope = 'Local API dispatcher, Miniflare D1, synthetic ingress, TEST agent';
       try {
         const git = (args: string[]) => execFileSync('git', ['-C', backend, ...args], {
@@ -86,6 +91,11 @@ export default class MatrixReporter implements Reporter {
         this.metadata.backendProvenance = 'unavailable';
         this.evidenceError = true;
       }
+    }
+    if (this.projects.includes('ui-local')) {
+      const ui = JSON.parse(readFileSync(join(config.rootDir, 'artifacts', 'ui-bundle', 'source.json'), 'utf8'));
+      this.metadata.uiCommit = ui.uiCommit;
+      this.metadata.runtimeScope = ui.scope;
     }
     this.archive = join(config.rootDir, 'artifacts', 'runs', this.runId);
     mkdirSync(this.archive, { recursive: true });
@@ -99,6 +109,7 @@ export default class MatrixReporter implements Reporter {
     const skipped = blocked || result.status === 'skipped' || result.status === 'interrupted';
     const observation: Observation = {
       id, title: test.title, project, durationMs: result.duration, evidence: [],
+      relatedMatrixIds: annotations.filter(a => a.type === 'related-matrix-id').map(a => a.description ?? ''),
       result: skipped ? 'NOT RUN' : result.status === 'passed' ? 'PASS' : 'FAIL',
       blocker: blocked?.description ?? annotations.find(a => a.type === 'blocker')?.description
     };
@@ -123,7 +134,7 @@ export default class MatrixReporter implements Reporter {
     if (this.discoveryOnly) return;
     const matrix = readCatalog().map(c => ({
       id: c.id,
-      layers: Object.fromEntries(['api', 'e2e', 'inventory'].map(layer => {
+      layers: Object.fromEntries(['api', 'ui-local', 'e2e', 'inventory'].map(layer => {
         const entries = this.observations.filter(o => o.id === c.id && o.project === layer);
         const status = entries.some(o => o.result === 'FAIL') ? 'FAIL'
           : entries.length && entries.every(o => o.result === 'PASS') ? 'PASS' : 'NOT RUN';
