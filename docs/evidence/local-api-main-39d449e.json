@@ -1,0 +1,521 @@
+{
+  "createdAt": "2026-10-31T05:55:26.176Z",
+  "runId": "c4fa538f-6ab5-4c09-b7eb-f7023672718e",
+  "metadata": {
+    "commit": "1f6858c1e02eed0031b9397da905f6c48b8243ed",
+    "dirty": false,
+    "baseline": "92430915e529ae12f0a7ed5c4b2842d771498e86",
+    "actualWorkers": 1,
+    "runtimeScope": "Local API dispatcher, Miniflare D1, synthetic ingress, TEST agent",
+    "backendCommit": "39d449eca4174527cc590efbd2a634455225db26",
+    "backendDirty": false
+  },
+  "command": "npm --prefix tests run test:api",
+  "exitCode": 0,
+  "observations": [
+    {
+      "id": "B-N05",
+      "title": "changed proof cannot authorize completion from an old snapshot",
+      "result": "PASS",
+      "durationMs": 3818,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-4d0284a7-4e5d-47d9-975f-6496d66fae38",
+        "scenario": "B",
+        "executionMode": "TEST"
+      },
+      "consistency-check": {
+        "variant": "change-before-review",
+        "caseId": "9058c44c-827a-47bb-8659-9e0d468cf7d4",
+        "proofId": "1e699d70-9c6d-4d22-9d90-9f4a28713126",
+        "errorCode": "PROOF_CONTEXT_MISMATCH",
+        "initialEvidenceVersion": 1,
+        "finalEvidenceVersion": 2,
+        "initialProofVersion": 1,
+        "finalProofVersion": 2,
+        "reviewStatus": "SUBMITTED",
+        "operationId": null,
+        "failedOperationStatus": null,
+        "caseStatus": "WAITING_EVIDENCE",
+        "replayStatus": null,
+        "receiptCount": 0,
+        "ruleCount": 0,
+        "transitionCount": 0,
+        "evaluationCount": 1,
+        "activeRulesVersion": 1
+      }
+    },
+    {
+      "id": "B-N05",
+      "title": "changed proof cannot authorize completion from an old snapshot",
+      "result": "PASS",
+      "durationMs": 2423,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-c81c18f3-7940-4353-8968-2cf72e5dbe11",
+        "scenario": "B",
+        "executionMode": "TEST"
+      },
+      "consistency-check": {
+        "variant": "change-during-evaluation",
+        "caseId": "bdfae213-6abc-4ee7-96db-60379404568c",
+        "proofId": "d9ffb227-9dd5-4f9a-bb99-45485a1c856c",
+        "errorCode": "STALE_VERSION",
+        "initialEvidenceVersion": 1,
+        "finalEvidenceVersion": 3,
+        "initialProofVersion": 1,
+        "finalProofVersion": 3,
+        "reviewStatus": "VERIFIED",
+        "operationId": "72fb8243-a48f-4ec2-b232-f074e72a9559",
+        "failedOperationStatus": "FAILED",
+        "caseStatus": "WAITING_EVIDENCE",
+        "replayStatus": 200,
+        "receiptCount": 0,
+        "ruleCount": 0,
+        "transitionCount": 0,
+        "evaluationCount": 3,
+        "activeRulesVersion": 1
+      }
+    },
+    {
+      "id": "R-N05",
+      "title": "accept and reject leave one durable terminal transition",
+      "result": "PASS",
+      "durationMs": 2043,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-88552832-789f-4236-9a19-4c494f4ac9b3",
+        "scenario": "D",
+        "executionMode": "TEST"
+      },
+      "consistency-check": {
+        "variant": "concurrent",
+        "caseId": "24bccb67-f5ad-4ab0-8e9a-56d564086e66",
+        "suggestionId": "648cddce-0d9a-4394-b6b0-b6d834613a0c",
+        "errorCode": "STALE_VERSION",
+        "acceptStatus": 409,
+        "rejectStatus": 200,
+        "suggestionStatus": "REJECTED",
+        "suggestionVersion": 2,
+        "ruleId": null,
+        "initialRulesVersion": 1,
+        "replayStatus": 200,
+        "terminalAcceptStatus": 409,
+        "terminalRejectStatus": 409,
+        "receiptCount": 1,
+        "ruleCount": 0,
+        "transitionCount": 1,
+        "evaluationCount": 1,
+        "activeRulesVersion": 1,
+        "terminalAcceptCode": "STALE_VERSION",
+        "terminalRejectCode": "STALE_VERSION"
+      }
+    },
+    {
+      "id": "R-N05",
+      "title": "accept and reject leave one durable terminal transition",
+      "result": "PASS",
+      "durationMs": 1990,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-d7006d62-373d-4b75-9a48-9e9cb855a948",
+        "scenario": "D",
+        "executionMode": "TEST"
+      },
+      "consistency-check": {
+        "variant": "accept-first",
+        "caseId": "54cbeba4-f0d5-4964-8606-ac93f822b912",
+        "suggestionId": "be6e787e-9190-4791-8bd5-5af74aff9856",
+        "errorCode": "STALE_VERSION",
+        "acceptStatus": 200,
+        "rejectStatus": 409,
+        "suggestionStatus": "ACCEPTED",
+        "suggestionVersion": 2,
+        "ruleId": "f5059a98-fef0-4e14-a273-3a61d1a98a0c",
+        "initialRulesVersion": 1,
+        "replayStatus": 200,
+        "terminalAcceptStatus": 409,
+        "terminalRejectStatus": 409,
+        "receiptCount": 1,
+        "ruleCount": 1,
+        "transitionCount": 1,
+        "evaluationCount": 1,
+        "activeRulesVersion": 2,
+        "terminalAcceptCode": "RULE_ALREADY_ACTIVE",
+        "terminalRejectCode": "STALE_VERSION"
+      }
+    },
+    {
+      "id": "R-N05",
+      "title": "accept and reject leave one durable terminal transition",
+      "result": "PASS",
+      "durationMs": 2087,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-33366848-76ad-4eec-ba4a-ac9840711604",
+        "scenario": "D",
+        "executionMode": "TEST"
+      },
+      "consistency-check": {
+        "variant": "reject-first",
+        "caseId": "7f60ae22-1174-4177-9936-71a0cb2461ce",
+        "suggestionId": "8debf3b9-b5cd-4a41-b7fd-62ba30b1d609",
+        "errorCode": "STALE_VERSION",
+        "acceptStatus": 409,
+        "rejectStatus": 200,
+        "suggestionStatus": "REJECTED",
+        "suggestionVersion": 2,
+        "ruleId": null,
+        "initialRulesVersion": 1,
+        "replayStatus": 200,
+        "terminalAcceptStatus": 409,
+        "terminalRejectStatus": 409,
+        "receiptCount": 1,
+        "ruleCount": 0,
+        "transitionCount": 1,
+        "evaluationCount": 1,
+        "activeRulesVersion": 1,
+        "terminalAcceptCode": "STALE_VERSION",
+        "terminalRejectCode": "STALE_VERSION"
+      }
+    },
+    {
+      "id": "AUTH-N01",
+      "title": "MEMBER cannot decide a case or accept/reject its rule suggestion",
+      "result": "PASS",
+      "durationMs": 1422,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-209fe96e-1123-4f3c-b800-377fc6f80ef2",
+        "scenario": "D",
+        "executionMode": "TEST"
+      }
+    },
+    {
+      "id": "R-N03",
+      "title": "conflicting payload cannot mutate; a different actor can reuse the same key",
+      "result": "PASS",
+      "durationMs": 1457,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-2d089ed3-5fd0-4ef7-a1f1-1bb2ae35b495",
+        "scenario": "B",
+        "executionMode": "TEST"
+      }
+    },
+    {
+      "id": null,
+      "title": "anonymous reads and MEMBER proof review are denied",
+      "result": "PASS",
+      "durationMs": 1048,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-9614ede7-5e33-455e-b88b-564204de8c9d",
+        "scenario": "C",
+        "executionMode": "TEST"
+      }
+    },
+    {
+      "id": "A-01",
+      "title": "API contract flow",
+      "result": "PASS",
+      "durationMs": 1055,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-a1c928ab-86f2-4193-a03e-449133af1e01",
+        "scenario": "A",
+        "executionMode": "TEST"
+      },
+      "terminal-case": {
+        "caseId": "aab6c061-03de-414e-977d-932bbecb0f12",
+        "caseVersion": 2,
+        "evidenceVersion": 1,
+        "activeRulesVersion": 1,
+        "status": "COMPLETED",
+        "decision": "RETURN_THEN_REFUND",
+        "operation": {
+          "id": "e521a016-80df-45db-b84b-bc3ec8363ba5",
+          "status": "COMPLETED",
+          "executionMode": "TEST",
+          "model": "local-test-double",
+          "providerResponseId": "test-767f3a68-5e67-4e89-90c7-4f9f7361efe3",
+          "result": {
+            "status": "COMPLETED",
+            "decision": "RETURN_THEN_REFUND"
+          }
+        },
+        "receipt": {
+          "id": "b27944c5-3bc4-4377-bd0d-b012b11616f0",
+          "mode": "SIMULATED",
+          "completionMode": "AUTO",
+          "agentRunId": "e521a016-80df-45db-b84b-bc3ec8363ba5",
+          "appliedRuleId": "builtin-size",
+          "appliedRuleVersion": 1,
+          "sourceCaseId": null
+        },
+        "flags": []
+      }
+    },
+    {
+      "id": "B-01",
+      "title": "API contract flow",
+      "result": "PASS",
+      "durationMs": 940,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-d1e54a70-d20f-4b5e-9851-ff4e5081852b",
+        "scenario": "B",
+        "executionMode": "TEST"
+      },
+      "terminal-case": {
+        "caseId": "22ab8af5-3f34-44f7-9171-0923fc4c4824",
+        "caseVersion": 2,
+        "evidenceVersion": 0,
+        "activeRulesVersion": 1,
+        "status": "WAITING_EVIDENCE",
+        "decision": null,
+        "operation": {
+          "id": "4e4425a5-9d00-4991-9786-a56fe0382bb2",
+          "status": "COMPLETED",
+          "executionMode": "TEST",
+          "model": "local-test-double",
+          "providerResponseId": "test-6dc23c42-c713-4ffb-a0ce-89239f275cfe",
+          "result": {
+            "status": "WAITING_EVIDENCE",
+            "decision": null
+          }
+        },
+        "receipt": null,
+        "flags": []
+      }
+    },
+    {
+      "id": "B-02",
+      "title": "API contract flow",
+      "result": "PASS",
+      "durationMs": 1117,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-8441539c-211a-4fb5-b55e-f55c50980523",
+        "scenario": "B",
+        "executionMode": "TEST"
+      },
+      "terminal-case": {
+        "caseId": "d136af06-1b62-4045-b279-4876de090cbc",
+        "caseVersion": 3,
+        "evidenceVersion": 1,
+        "activeRulesVersion": 1,
+        "status": "WAITING_EVIDENCE",
+        "decision": null,
+        "operation": {
+          "id": "dc437333-a621-41e9-8b36-7d68ee65642d",
+          "status": "COMPLETED",
+          "executionMode": "TEST",
+          "model": "local-test-double",
+          "providerResponseId": "test-67b3dc51-175a-411e-b37d-b2397a7a09e2",
+          "result": {
+            "status": "WAITING_EVIDENCE",
+            "decision": null
+          }
+        },
+        "receipt": null,
+        "flags": []
+      }
+    },
+    {
+      "id": "B-03",
+      "title": "API contract flow",
+      "result": "PASS",
+      "durationMs": 1654,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-7a6900b5-221e-4e46-9dd3-ab73d1c63415",
+        "scenario": "B",
+        "executionMode": "TEST"
+      },
+      "terminal-case": {
+        "caseId": "cca51844-0d5e-4c29-b044-c484e844c5a4",
+        "caseVersion": 5,
+        "evidenceVersion": 2,
+        "activeRulesVersion": 1,
+        "status": "COMPLETED",
+        "decision": "RETURN_THEN_REFUND",
+        "operation": {
+          "id": "c8da7d5f-27b8-46cc-b64f-af9959f2610f",
+          "status": "COMPLETED",
+          "executionMode": "TEST",
+          "model": "local-test-double",
+          "providerResponseId": "test-f044e01e-0ffa-4a5e-86a3-c4ca6d105115",
+          "result": {
+            "status": "COMPLETED",
+            "decision": "RETURN_THEN_REFUND"
+          }
+        },
+        "receipt": {
+          "id": "4ef24e5f-c016-4714-9b8e-2acd7f0c588e",
+          "mode": "SIMULATED",
+          "completionMode": "AUTO",
+          "agentRunId": "c8da7d5f-27b8-46cc-b64f-af9959f2610f",
+          "appliedRuleId": "builtin-damage",
+          "appliedRuleVersion": 1,
+          "sourceCaseId": null
+        },
+        "flags": []
+      }
+    },
+    {
+      "id": "C-01",
+      "title": "API contract flow",
+      "result": "PASS",
+      "durationMs": 1317,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-2872965d-1d5a-4286-a1cc-83b752f3169c",
+        "scenario": "C",
+        "executionMode": "TEST"
+      },
+      "terminal-case": {
+        "caseId": "642e4ec7-30c2-493f-9c0f-eb21abcc911d",
+        "caseVersion": 4,
+        "evidenceVersion": 2,
+        "activeRulesVersion": 1,
+        "status": "COMPLETED",
+        "decision": "DISPUTE",
+        "operation": {
+          "id": "0fe5f2cf-8cb4-41c0-9af1-548f75f70a69",
+          "status": "COMPLETED",
+          "executionMode": "TEST",
+          "model": "local-test-double",
+          "providerResponseId": "test-7846cf65-7d30-4c5f-9035-73f20aed0c2a",
+          "result": {
+            "status": "NEEDS_OWNER_REVIEW",
+            "decision": null
+          }
+        },
+        "receipt": {
+          "id": "c313675b-eb61-41b1-ae1a-13e8b6c9ad6c",
+          "mode": "SIMULATED",
+          "completionMode": "MANUAL",
+          "agentRunId": null,
+          "appliedRuleId": null,
+          "appliedRuleVersion": null,
+          "sourceCaseId": null
+        },
+        "flags": [
+          "DELIVERY_CONFLICT",
+          "REPEATED_COMPLAINTS",
+          "OVER_HARD_CAP"
+        ]
+      }
+    },
+    {
+      "id": "D-01",
+      "title": "API contract flow",
+      "result": "PASS",
+      "durationMs": 1166,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-ba161faa-e657-404c-9e2d-c70a943e9e60",
+        "scenario": "D",
+        "executionMode": "TEST"
+      },
+      "terminal-case": {
+        "caseId": "462deb1c-1bc7-4e1f-8894-54defe5db000",
+        "caseVersion": 3,
+        "evidenceVersion": 1,
+        "activeRulesVersion": 1,
+        "status": "COMPLETED",
+        "decision": "RETURN_THEN_REFUND",
+        "operation": {
+          "id": "3c7c9fbe-290e-4516-8884-02d3e7e65409",
+          "status": "COMPLETED",
+          "executionMode": "TEST",
+          "model": "local-test-double",
+          "providerResponseId": "test-f25ffe34-3987-4c62-b0cb-3cf03b6f4493",
+          "result": {
+            "status": "NEEDS_OWNER_REVIEW",
+            "decision": null
+          }
+        },
+        "receipt": {
+          "id": "a34b2db7-64bb-4393-8a61-a9821b86cca5",
+          "mode": "SIMULATED",
+          "completionMode": "MANUAL",
+          "agentRunId": null,
+          "appliedRuleId": null,
+          "appliedRuleVersion": null,
+          "sourceCaseId": null
+        },
+        "flags": []
+      }
+    },
+    {
+      "id": "E-01",
+      "title": "API contract flow",
+      "result": "PASS",
+      "durationMs": 1402,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-29f661e4-0e1e-4af8-9d7e-829fa142ccba",
+        "scenario": "DE",
+        "executionMode": "TEST"
+      },
+      "terminal-case": {
+        "caseId": "087fa696-d319-42be-a7db-3f88b710a453",
+        "caseVersion": 2,
+        "evidenceVersion": 1,
+        "activeRulesVersion": 1,
+        "status": "NEEDS_OWNER_REVIEW",
+        "decision": null,
+        "operation": {
+          "id": "30231c43-0e2c-49cf-9047-49480add3b3a",
+          "status": "COMPLETED",
+          "executionMode": "TEST",
+          "model": "local-test-double",
+          "providerResponseId": "test-943bea46-9084-4ea3-927b-93379eb847b2",
+          "result": {
+            "status": "NEEDS_OWNER_REVIEW",
+            "decision": null
+          }
+        },
+        "receipt": null,
+        "flags": []
+      }
+    },
+    {
+      "id": "E-02",
+      "title": "API contract flow",
+      "result": "PASS",
+      "durationMs": 1643,
+      "fixture-run": {
+        "fixtureRunId": "pr8-local-58eebfa3-dbb6-4408-836d-523db2e580de",
+        "scenario": "DE",
+        "executionMode": "TEST"
+      },
+      "terminal-case": {
+        "caseId": "ff5f35a6-3c0a-48a9-9da7-7cc8217e2c98",
+        "caseVersion": 4,
+        "evidenceVersion": 1,
+        "activeRulesVersion": 2,
+        "status": "COMPLETED",
+        "decision": "RETURN_THEN_REFUND",
+        "operation": {
+          "id": "9b73f642-86ee-4a02-b11f-61db3aee40d9",
+          "status": "COMPLETED",
+          "executionMode": "TEST",
+          "model": "local-test-double",
+          "providerResponseId": "test-fcec8e03-761a-41dc-833b-685511a8d29f",
+          "result": {
+            "status": "COMPLETED",
+            "decision": "RETURN_THEN_REFUND"
+          }
+        },
+        "receipt": {
+          "id": "5008701b-f17a-48e4-aa13-2756e5bd72ef",
+          "mode": "SIMULATED",
+          "completionMode": "AUTO",
+          "agentRunId": "9b73f642-86ee-4a02-b11f-61db3aee40d9",
+          "appliedRuleId": "3f0c0109-010a-4c78-9e63-75f3674a8475",
+          "appliedRuleVersion": 2,
+          "sourceCaseId": "130b1305-d48c-4b57-ab3d-f4898afdf9eb"
+        },
+        "flags": []
+      }
+    }
+  ],
+  "verification": {
+    "harnessTests": "10/10 PASS",
+    "backendTests": "27/27 PASS",
+    "qaTypecheck": "PASS"
+  },
+  "fixtureNotes": [
+    "B-N05 changes proof tracking and proof/aggregate evidence versions directly in its disposable D1 fixture. It exercises change-before-review and change-during-evaluation, with the injected TEST agent paused after snapshot capture.",
+    "R-N05 sends accept and reject over HTTP concurrently and separately exercises accept-first and reject-first terminal transitions. SQL observations check receipt, source-rule, transition-event and evaluation counts.",
+    "Synthetic local sessions and a TEST agent are used. Browser E2E, hosted ingress/D1 and LIVE provider behavior require separate verification."
+  ]
+}

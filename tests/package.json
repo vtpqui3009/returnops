@@ -1,0 +1,18 @@
+{
+  "name": "returnops-qa",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "test": "playwright test --project=harness",
+    "test:api": "node scripts/preflight.mjs api && playwright test --project=api",
+    "test:e2e": "node scripts/preflight.mjs e2e && playwright test --project=e2e",
+    "test:list": "playwright test --list",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "22.19.19",
+    "typescript": "5.9.3"
+  }
+}

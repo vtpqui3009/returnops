@@ -1,53 +1,53 @@
-# ReturnOps API contract proposal
+# ReturnOps API contract
 
-Status: **proposed for Nhân, Quí, and Khoa review**. No routes or workflow are implemented by the baseline scaffold. Shared TypeScript shapes live in `src/shared/contracts.ts`.
+This contract is implemented by `src/server/api.ts` and the route adapters under `app/api/`. It covers one synthetic shop, D1 persistence, metadata-only proof, and simulated outcomes. The API never sends buyers messages, submits marketplace actions, or moves money.
 
-## Boundary and conventions
+## Authentication and mutation rules
 
-- One simulated shop. The server loads canonical order amount, delivery time, tracking, and version from D1. Browser input cannot set actor, role, reviewer, shop, amount, decision mode, or policy cap.
-- Hosted identity comes from the Sites verified sign-in helper in `app/chatgpt-auth.ts`. Server-side allowlists map the stable Sites user ID to `OWNER` or `MEMBER`. Missing identity is 401; authenticated but disallowed action is 403; cross-shop resource is 404. Local TEST identity must be enabled by server-only local configuration and must never be enabled in a hosted build.
-- Mutations require same-origin `Origin`, JSON body with only documented fields, and `Idempotency-Key` (opaque 1–128 printable characters). Request body size is bounded. Unknown fields and malformed values return 400.
-- Money is positive integer VND. Timestamps are epoch seconds UTC. Resource versions are positive integers. Expected versions must be exact; stale state is 409. Cursor and page size are bounded, with server-owned opaque cursor content.
-- Every mutation uses a REQUEST operation scoped by `(shop, actor ID, method, resource/action, Idempotency-Key)`. The payload hash is SHA-256 of a canonical JSON encoding of validated fields, including expected versions. Auth and validation run first; a matching committed REQUEST replays its original HTTP status/body before stale-version checks. Reusing a key with different input returns 409 `IDEMPOTENCY_CONFLICT`. A fresh intent needs a fresh key.
-- The REQUEST acknowledgement is immutable. Its linked EVALUATION has independent `PENDING | RUNNING | COMPLETED | FAILED` state. GET detail exposes the current execution result or redacted error. A model failure never changes the prior 201/202 acknowledgement into an HTTP error.
-- Response errors use `{ "error": { "code": string, "message": string, "details"?: object, "requestId": string } }`. `details` cannot reveal another shop's data. 500 responses are redacted. Version, busy, duplicate, and proof context conflicts use 409 with distinct codes.
-- `SIMULATED` receipts, packets, and replies never mean payment, marketplace submission, or buyer delivery. `completionMode` (`AUTO | MANUAL`) is separate from agent `executionMode` (`LIVE | TEST | REPLAY`). Manual receipts have `agentRunId: null`.
+Hosted requests are trusted only when the Sites ingress has been verified and `SITES_IDENTITY_VERIFIED=true` is set server-side. The server maps `oai-authenticated-user-id` to `OWNER_USER_IDS` or `MEMBER_USER_IDS`. Missing trust or identity returns `401 UNAUTHENTICATED`; an authenticated ID outside the allowlists returns `403 FORBIDDEN`. The default is fail-closed.
+
+Every mutation requires a same-origin `Origin` header, JSON content type, an `Idempotency-Key` with 1–128 printable characters, and only documented JSON fields. Unknown or malformed fields return `400`. Bodies are limited to 16 KiB. Money is positive integer VND and times are epoch seconds. Exact resource-version checks return `409 STALE_VERSION` when stale.
+
+Each mutation stores an immutable REQUEST acknowledgement scoped to shop, actor, method, action, resource, and idempotency key. Replaying the same validated payload returns the original status/body, even when its linked EVALUATION is running or failed. Reusing a key with another payload returns `409 IDEMPOTENCY_CONFLICT`. EVALUATION rows have independent `PENDING`, `RUNNING`, `COMPLETED`, or `FAILED` status.
+
+Errors use `{ "error": { "code": string, "message": string, "requestId": string } }`; internal failures are redacted.
 
 ## Routes
 
-| Method | Route | Input | Success | Permission |
-| --- | --- | --- | --- | --- |
-| GET | `/api/cases?status=&cursor=&limit=` | Bounded filters | 200 queue with versions and next cursor | MEMBER/OWNER |
-| GET | `/api/cases/:id` | Case ID | 200 `CaseDetail`, including evidence, timeline, evaluation and active rules version | MEMBER/OWNER |
-| POST | `/api/cases` | `IntakeRequest` | 201 `IntakeAcknowledgement` | MEMBER/OWNER |
-| POST | `/api/cases/:id/evaluate` | `EvaluateRequest` | 202 `EvaluateAcknowledgement` | MEMBER/OWNER |
-| POST | `/api/cases/:id/evidence` | `SubmitEvidenceRequest` | 201 `EvidenceAcknowledgement`; submitted only | MEMBER/OWNER |
-| POST | `/api/cases/:id/evidence/:eid/review` | `ReviewEvidenceRequest` | 200 `ReviewAcknowledgement` | OWNER |
-| POST | `/api/cases/:id/owner-decision` | `OwnerDecisionRequest` | 200 case outcome, receipt and optional suggestion ID | OWNER |
-| GET | `/api/rule-suggestions?status=` | Bounded status filter | 200 suggestions, active rules, `activeRulesVersion` | MEMBER/OWNER |
-| POST | `/api/rule-suggestions/:id/accept` | `AcceptSuggestionRequest` | 200 rule ID and new catalog version | OWNER |
-| POST | `/api/rule-suggestions/:id/reject` | `RejectSuggestionRequest` | 200 rejected suggestion/version | OWNER |
+| Method | Route | Input / result | Permission |
+| --- | --- | --- | --- |
+| GET | `/api/cases?status=&cursor=&limit=` | Bounded queue, versions, flags, next cursor | Member/owner |
+| GET | `/api/cases/:id` | Case, current order snapshot, evidence, evaluation, timeline, receipt | Member/owner |
+| POST | `/api/cases` | `IntakeRequest` → `201 {caseId,evaluationOperationId}` | Member/owner |
+| POST | `/api/cases/:id/evaluate` | `EvaluateRequest` → `202 {caseId,operationId}` | Member/owner |
+| POST | `/api/cases/:id/evidence` | `SubmitEvidenceRequest` → `201 {evidenceId,evidenceVersion}` | Member/owner |
+| POST | `/api/cases/:id/evidence/:eid/review` | `ReviewEvidenceRequest` → `200` review and optional evaluation ID | Owner |
+| POST | `/api/cases/:id/owner-decision` | `OwnerDecisionRequest` → `200` manual simulated receipt and optional suggestion | Owner |
+| GET | `/api/rule-suggestions?status=` | Suggestions, active rules, catalog version | Member/owner |
+| POST | `/api/rule-suggestions/:id/accept` | `AcceptSuggestionRequest` → new rule/catalog version | Owner |
+| POST | `/api/rule-suggestions/:id/reject` | `RejectSuggestionRequest` → rejected version | Owner |
 
-## State and policy
+Request and response interfaces are in `src/shared/contracts.ts`. Route adapters are thin; authorization, validation, persistence, and workflow logic stays server-side.
 
-`Decision`: `REFUND_NOW | RETURN_THEN_REFUND | PARTIAL_REFUND | DISPUTE`. Only `RETURN_THEN_REFUND` may be automatic in the current demo proposal. `OwnerDecisionRequest` currently permits only `RETURN_THEN_REFUND | DISPUTE`; the server must reject other values. Rules for owner `REFUND_NOW` and `PARTIAL_REFUND` need team approval before enabling those actions. `CaseStatus`: `NEW | WAITING_EVIDENCE | NEEDS_OWNER_REVIEW | COMPLETED | TECHNICAL_ERROR`.
+## Policy and workflow
 
-Case, order, evidence, suggestion, and active rules catalog versions are distinct. Evidence changes bump its own version and case aggregate evidence/case versions. Evaluation requires `expectedCaseVersion` and `expectedActiveRulesVersion`, captures the post-intent snapshot, and cannot reuse a decision computed against an older catalog. A case with an unexpired active evaluation returns 409 `CASE_BUSY` for a competing explicit evaluate. The receipt is unique per case.
+The approved DEMO policy uses an inclusive hard cap of 300,000 VND and a seven-day delivery window. `deliveredAt=null`, future delivery times, expired windows, missing current proof, and risk flags block monetary completion. The final D1 guard rechecks current clock-sensitive facts. `DISPUTE` is a non-monetary owner closure and preserves risk flags.
 
-Proof is metadata only: `caseId, orderId, orderVersion, tracking, type, source, reference, observedAt, evidenceVersion, reviewStatus, verifiedBy, verifiedAt, reviewReason`. `reference` is plain text and is never fetched or rendered as HTML. Only owner review may set `VERIFIED`; wrong/stale order or tracking produces 409 `PROOF_CONTEXT_MISMATCH` with no mutation or automatic resume. A later order change makes earlier verified proof stale without editing its history.
+Proof is metadata only: order ID/version, tracking, type, source, reference, observed time, review state, and reviewer. Only an owner can set `VERIFIED`; wrong or stale order/tracking/version returns `409 PROOF_CONTEXT_MISMATCH` without changing evidence or resuming evaluation.
 
-Team DEMO policy: amount/item value ≤300,000 VND and delivery window ≤7×24 hours, both inclusive, based on server and DB time, for automatic and owner-approved monetary completion. `OrderSnapshot.deliveredAt` is epoch seconds or `null` when unknown; `null`, future delivery time, or an expired window blocks monetary completion and must never default to current time. Owner `DISPUTE` is a non-monetary closure and may resolve C above the cap without clearing risk flags. Hard limits, proof requirements, and risk flags cannot be relaxed by the model or a learned rule. A learned rule may use only allowlisted reason group and item condition; it cannot include an order ID or source case price. Pending or rejected suggestions do not change active rules. Owner case decision and owner rule acceptance are separate mutations.
+The agent uses the server-only OpenAI Responses API with model `OPENAI_MODEL` (approved default `gpt-5.6-terra`). It can call only `read_order`, `check_policy`, `list_missing_evidence`, `draft_reply`, and `escalate`. Limits are eight tool calls, nine model rounds, and 30 seconds. Deterministic policy remains authoritative. Provider errors, invalid tools, refusals, missing configuration, and timeouts fail closed. Technical-error owner recovery is a separate `MANUAL + SIMULATED` action with no technical-exception learning.
 
-Model calls use the server-only OpenAI Responses API. Proposed limits are 8 total tool calls, 9 model rounds, and 30 seconds total; the selected `OPENAI_MODEL` must be approved and probed with real tool calling. Allowed read/draft tools are `read_order`, `check_policy`, `list_missing_evidence`, `draft_reply`, and `escalate`; the model cannot mutate the case, accept a rule, or choose a tenant. Missing key/model, timeout, refusal, invalid tool call, or provider error fail closed. A separate owner action may close an eligible technical error case as `MANUAL + SIMULATED`, without marking the failed run LIVE-success or creating a learned rule.
+Automatic receipts are unique per case and always `SIMULATED`; manual receipts have `agentRunId: null`. `LIVE`, `TEST`, and `REPLAY` describe the agent execution attempt, not a real-world side effect.
 
-## Representative exchanges
+## Learning flow
 
-Intake A (member): `POST /api/cases`, `Idempotency-Key: a-intake-1`, body `{"orderId":"demo-a","claim":"Received the wrong size"}` → `201 {"caseId":"<id>","evaluationOperationId":"<id>"}`. GET detail later shows `COMPLETED`, `RETURN_THEN_REFUND`, one `SIMULATED` receipt and an agent `executionMode` that truthfully labels LIVE/TEST/REPLAY.
+Owner D completion and rule acceptance are separate mutations. Eligible D creates one `PENDING` suggestion without changing the active catalog. Reject leaves the catalog unchanged. Accept requires both suggestion and catalog versions, inserts one normalized immutable rule, increments `activeRulesVersion` once, and preserves source-case provenance. E must be evaluated again with fresh versions; a pending or rejected suggestion cannot affect E.
 
-Intake B uses the same shape. GET detail shows `WAITING_EVIDENCE` and `missingEvidence:["SELLER_PACKING_PROOF"]`. Submit proof creates `SUBMITTED`; it never resumes by itself. Owner review with `VERIFIED`, matching current order/tracking/version and expected case/evidence versions, returns a new `evaluationOperationId`. Wrong context returns `409 PROOF_CONTEXT_MISMATCH`; case/evidence versions remain unchanged.
+## Representative failure cases
 
-Owner C reviews the relevant current delivery proof, then sends `{"expectedCaseVersion":4,"expectedActiveRulesVersion":1,"decision":"DISPUTE","reason":"Delivery evidence conflicts with the claim"}`. Result remains `SIMULATED`; `DELIVERY_CONFLICT`, `REPEATED_COMPLAINTS`, and `OVER_HARD_CAP` remain visible, with no rule suggestion.
-
-Owner D sends `RETURN_THEN_REFUND` with a reason. An eligible result has one `PENDING` suggestion but active rules version stays the same. E evaluated while pending or after reject remains `NEEDS_OWNER_REVIEW`. Accept D's suggestion with both expected suggestion and catalog versions, then evaluate E with fresh versions and a new key; completion references the new rule ID/version and D's case ID.
-
-Examples of failures: no signed-in visitor → 401 `UNAUTHENTICATED`; member calling review → 403 `FORBIDDEN`; stale `expectedCaseVersion` → 409 `STALE_VERSION`; same key with different body → 409 `IDEMPOTENCY_CONFLICT`. Retrying the same intake key and body returns the original 201 body even if its evaluation later fails. A terminal failure needs a new evaluate key; the original acknowledgement stays intact.
+- anonymous request: `401 UNAUTHENTICATED`;
+- member owner action: `403 FORBIDDEN`;
+- stale case/evidence/suggestion/catalog version: `409 STALE_VERSION`;
+- active competing evaluation: `409 CASE_BUSY`;
+- mismatched proof context: `409 PROOF_CONTEXT_MISMATCH`;
+- same key, different payload: `409 IDEMPOTENCY_CONFLICT`.
