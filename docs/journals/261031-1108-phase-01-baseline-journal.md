@@ -1,8 +1,11 @@
 # Phase 1 baseline finally has a reviewable shape
 
-**Date**: 2026-10-31 11:08 ICT  
-**Severity**: Medium  
-**Component**: Sites/Vinext scaffold, D1 contract, shared workflow specification  
+**Date**: 2026-10-31 11:08 ICT
+
+**Severity**: Medium
+
+**Component**: Sites/Vinext scaffold, D1 contract, shared workflow specification
+
 **Status**: Ongoing
 
 ## What Happened

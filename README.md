@@ -15,7 +15,7 @@ ReturnOps is a one-shop simulated return/refund workflow. This branch contains t
 Requires Node.js 22.13.0 or newer. The starter uses npm and its committed lockfile.
 
 ```sh
-node /path/to/sites-plugin/scripts/install-dependencies.mjs
+npm run install:ci
 npm run build
 npx tsc --noEmit
 ```
