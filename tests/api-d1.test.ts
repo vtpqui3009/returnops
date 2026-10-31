@@ -140,6 +140,22 @@ test('D learning changes E only after explicit acceptance, while C dispute prese
   assert.equal(completedC.status, 'COMPLETED'); assert.deepEqual(new Set(completedC.flags), new Set(['DELIVERY_CONFLICT', 'REPEATED_COMPLAINTS', 'OVER_HARD_CAP']));
 });
 
+test('additional agent escalation still blocks learning from an otherwise eligible fit return', async (t) => {
+  const { runtime, db } = await demo(); t.after(() => runtime.dispose());
+  const escalated: AgentRunner = async (...args) => ({ ...await runner(...args), escalated: true, escalationReason: 'Additional concern outside deterministic policy' });
+  const intake = await handleApi(request('/api/cases', { orderId: 'demo-d', claim: 'Fit return' }, 'escalated-d'), db, config, escalated);
+  assert.equal(intake.status, 201);
+  const { caseId } = await intake.json() as { caseId: string };
+  const detail = await (await handleApi(get(`/api/cases/${caseId}`), db, config, escalated)).json() as { reasons: string[]; caseVersion: number; activeRulesVersion: number };
+  assert.ok(detail.reasons.includes('AGENT_ESCALATION'));
+  const decision = await handleApi(request(`/api/cases/${caseId}/owner-decision`, { expectedCaseVersion: detail.caseVersion, expectedActiveRulesVersion: detail.activeRulesVersion, decision: 'RETURN_THEN_REFUND', reason: 'Owner manually resolves additional concern' }, 'escalated-d-decision', 'owner'), db, config, escalated);
+  assert.equal(decision.status, 200);
+  const result = await decision.json() as { suggestionId: string | null; activeRulesVersion: number };
+  assert.equal(result.suggestionId, null);
+  assert.equal(result.activeRulesVersion, detail.activeRulesVersion);
+  assert.equal((await db.prepare('SELECT count(*) AS count FROM rule_suggestions').first<{ count: number }>())?.count, 0);
+});
+
 test('failed evaluation preserves acknowledgement and only guarded owner recovery can create a manual receipt', async (t) => {
   const { runtime, db } = await demo(); t.after(() => runtime.dispose());
   const failedRunner: AgentRunner = async () => { throw new Error('provider unavailable'); };
